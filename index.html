@@ -53,6 +53,23 @@
       </section>
 
       <section class="tool-section">
+        <h2>Vorlagenkatalog</h2>
+        <div class="tool-grid tool-grid-catalog">
+          <button class="tool-card" type="button" data-add="flower"><span class="tool-art art-flower">✿</span><span>Blume</span></button>
+          <button class="tool-card" type="button" data-add="pocket4"><span class="tool-art art-pocket">4</span><span>Tasche · 4 Karten</span></button>
+          <button class="tool-card" type="button" data-add="fan1"><span class="tool-art art-fan">≋</span><span>Fächer 1</span></button>
+          <button class="tool-card" type="button" data-add="fan2"><span class="tool-art art-fan">▤</span><span>Fächer 2</span></button>
+          <button class="tool-card" type="button" data-add="leporello"><span class="tool-art art-leporello">▥</span><span>Leporello</span></button>
+          <button class="tool-card" type="button" data-add="foldcross"><span class="tool-art art-cross">✚</span><span>Faltkreuz</span></button>
+          <button class="tool-card" type="button" data-add="foldsheet"><span class="tool-art art-sheet">▤</span><span>Faltblatt</span></button>
+          <button class="tool-card" type="button" data-add="hexfold"><span class="tool-art art-hexagon"></span><span>Falt-Sechseck</span></button>
+          <button class="tool-card" type="button" data-add="leporello-figure"><span class="tool-art art-person">♟</span><span>Leporello-Figur</span></button>
+          <button class="tool-card" type="button" data-add="flipflap"><span class="tool-art art-flip">▥</span><span>Flip-Flap</span></button>
+          <button class="tool-card" type="button" data-add="foldheart"><span class="tool-art art-heart">♥</span><span>Faltherz</span></button>
+        </div>
+      </section>
+
+      <section class="tool-section">
         <h2>Formen &amp; Karten</h2>
         <div class="tool-grid">
           <button class="tool-card" type="button" data-add="note"><span class="tool-art art-note">Aa</span><span>Notizkarte</span></button>
@@ -78,6 +95,12 @@
           <span id="zoom-label">100%</span>
           <button class="icon-button" id="zoom-in" type="button" aria-label="Vergrößern" title="Vergrößern">+</button>
           <button class="icon-button" id="zoom-fit" type="button" aria-label="Ansicht einpassen" title="Ansicht einpassen">⤢</button>
+          <button class="button button-quiet guide-toggle" id="toggle-guides" type="button" aria-pressed="true" title="Schnitt-, Falz- und Klebelinien ein- oder ausblenden">Linien: An</button>
+        </div>
+        <div class="guide-legend" aria-label="Linienlegende">
+          <span><i class="legend-cut"></i>Schnitt</span>
+          <span><i class="legend-fold"></i>Falz</span>
+          <span><i class="legend-glue"></i>Klebe</span>
         </div>
       </div>
       <div class="canvas-viewport" id="canvas-viewport">
