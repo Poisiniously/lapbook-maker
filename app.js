@@ -1,0 +1,535 @@
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "lapbook-maker-project-v1";
+  const stage = document.getElementById("lapbook-stage");
+  const stageElements = document.getElementById("stage-elements");
+  const stageEmpty = document.getElementById("stage-empty");
+  const inspector = document.getElementById("inspector-content");
+  const projectTitle = document.getElementById("project-title");
+  const saveState = document.getElementById("save-state");
+  const elementCount = document.getElementById("element-count");
+  const selectionLabel = document.getElementById("selection-label");
+  const scaler = document.getElementById("canvas-scaler");
+  const zoomLabel = document.getElementById("zoom-label");
+  const paperColor = document.getElementById("paper-color");
+  const toast = document.getElementById("toast");
+
+  const defaults = {
+    title: "Mein Lapbook",
+    paper: "#fffdf7",
+    elements: [],
+    selectedId: null
+  };
+
+  const templates = {
+    flap: { type: "flap", w: 190, h: 150, text: "Hier öffnen", secondary: "Deine geheime Info steht hier.", bg: "#e7dafa", color: "#63517e" },
+    accordion: { type: "accordion", w: 255, h: 105, text: "Teil 1", secondary: "Teil 2|Teil 3", bg: "#e8def8", color: "#63517f" },
+    booklet: { type: "booklet", w: 155, h: 180, text: "Mini-Buch", secondary: "Dein Wissen auf mehreren Seiten.", bg: "#d9cdf2", color: "#5f4b87" },
+    pocket: { type: "pocket", w: 190, h: 135, text: "Wissens-Tasche", secondary: "Zieh mich heraus!", bg: "#e6dafa", color: "#62517f" },
+    wheel: { type: "wheel", w: 160, h: 160, text: "Drehen", secondary: "Thema", bg: "#e7dcf8", color: "#7055a4" },
+    tab: { type: "tab", w: 125, h: 48, text: "KAPITEL 1", secondary: "", bg: "#d8ccf4", color: "#65518d" },
+    note: { type: "note", w: 180, h: 120, text: "Schreibe hier deine Notiz.", secondary: "", bg: "#fff3cf", color: "#725a32" },
+    circle: { type: "circle", w: 125, h: 125, text: "Kreis", secondary: "", bg: "#e9defa", color: "#594b72" },
+    triangle: { type: "triangle", w: 145, h: 130, text: "Dreieck", secondary: "", bg: "#f5d9e5", color: "#87566f" },
+    star: { type: "star", w: 140, h: 140, text: "Stern", secondary: "", bg: "#ffe7ae", color: "#8c6d35" },
+    hexagon: { type: "hexagon", w: 160, h: 125, text: "Sechseck", secondary: "", bg: "#d5e9df", color: "#4f7560" },
+    banner: { type: "banner", w: 270, h: 75, text: "Mein Thema", secondary: "", bg: "#f3cddd", color: "#87536e" }
+  };
+
+  let project = loadProject();
+  let zoom = 1;
+  let drag = null;
+  let toastTimer = null;
+
+  function uid() {
+    return "el-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char];
+    });
+  }
+
+  function loadProject() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return structuredClone(defaults);
+      const parsed = JSON.parse(stored);
+      if (!parsed || !Array.isArray(parsed.elements)) return structuredClone(defaults);
+      parsed.elements = parsed.elements.filter(function (item) {
+        return item && templates[item.type] && typeof item.id === "string";
+      }).map(function (item) {
+        const base = templates[item.type];
+        return {
+          id: item.id,
+          type: item.type,
+          x: clamp(Number(item.x) || 0, 0, 1000),
+          y: clamp(Number(item.y) || 0, 0, 700),
+          w: clamp(Number(item.w) || base.w, 45, 600),
+          h: clamp(Number(item.h) || base.h, 40, 500),
+          rotation: clamp(Number(item.rotation) || 0, -180, 180),
+          text: String(item.text == null ? base.text : item.text).slice(0, 500),
+          secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
+          bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
+          color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
+          open: Boolean(item.open)
+        };
+      });
+      return {
+        title: String(parsed.title || defaults.title).slice(0, 60),
+        paper: /^#[0-9a-f]{6}$/i.test(parsed.paper) ? parsed.paper : defaults.paper,
+        elements: parsed.elements,
+        selectedId: null
+      };
+    } catch (error) {
+      console.warn("Could not load saved lapbook:", error);
+      return structuredClone(defaults);
+    }
+  }
+
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        title: project.title,
+        paper: project.paper,
+        elements: project.elements
+      }));
+      saveState.innerHTML = '<span class="save-dot"></span> Lokal gespeichert';
+    } catch (error) {
+      saveState.innerHTML = '<span class="save-dot" style="background:#d59c52"></span> Speicher voll';
+      console.warn("Could not save lapbook:", error);
+      showToast("Speichern nicht möglich – exportiere dein Lapbook als Datei.");
+    }
+  }
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add("visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("visible"); }, 2300);
+  }
+
+  function getSelected() {
+    return project.elements.find(function (item) { return item.id === project.selectedId; }) || null;
+  }
+
+  function selectElement(id) {
+    project.selectedId = id;
+    stageElements.querySelectorAll(".element").forEach(function (node) {
+      node.classList.toggle("selected", node.dataset.id === id);
+    });
+    const selected = getSelected();
+    selectionLabel.textContent = selected ? (templates[selected.type] ? typeName(selected.type) : "Element") : "Nichts ausgewählt";
+    renderInspector();
+  }
+
+  function typeName(type) {
+    const names = {
+      flap: "Klappe", accordion: "Akkordeon", booklet: "Mini-Buch", pocket: "Tasche",
+      wheel: "Drehscheibe", tab: "Reiter", note: "Notizkarte", circle: "Kreis",
+      triangle: "Dreieck", star: "Stern", hexagon: "Sechseck", banner: "Banner"
+    };
+    return names[type] || "Element";
+  }
+
+  function makeLabel(text, className) {
+    const label = document.createElement("div");
+    label.className = className || "element-label";
+    label.textContent = text;
+    return label;
+  }
+
+  function makeToggle(item, label) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "fold-toggle";
+    button.dataset.action = "toggle";
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    button.textContent = item.open ? "↶" : "↗";
+    return button;
+  }
+
+  function renderElement(item) {
+    const node = document.createElement("div");
+    node.className = "element type-" + item.type + (item.open ? " is-open" : "");
+    node.dataset.id = item.id;
+    node.style.left = (item.x / 10) + "%";
+    node.style.top = (item.y / 7) + "%";
+    node.style.width = (item.w / 10) + "%";
+    node.style.height = (item.h / 7) + "%";
+    node.style.transform = "rotate(" + item.rotation + "deg)";
+    node.style.zIndex = String(3 + project.elements.indexOf(item));
+    node.style.color = item.color;
+
+    if (["flap", "booklet", "pocket", "accordion", "wheel"].includes(item.type)) {
+      node.style.background = "transparent";
+    } else {
+      node.style.backgroundColor = item.bg;
+    }
+
+    if (item.type === "flap") {
+      const body = document.createElement("div");
+      body.className = "flap-body";
+      const inside = makeLabel(item.secondary, "flap-inside");
+      const front = makeLabel(item.text, "flap-front");
+      body.append(inside, front);
+      node.append(body, makeToggle(item, item.open ? "Klappe schließen" : "Klappe öffnen"));
+    } else if (item.type === "accordion") {
+      const parts = [item.text].concat(item.secondary.split("|")).slice(0, 3);
+      const panels = document.createElement("div");
+      panels.className = "accordion-panels";
+      parts.forEach(function (part) { panels.append(makeLabel(part, "accordion-panel")); });
+      node.append(panels, makeToggle(item, item.open ? "Akkordeon schließen" : "Akkordeon auffalten"));
+    } else if (item.type === "booklet") {
+      node.append(makeLabel(item.secondary, "booklet-inside"), makeLabel(item.text, "booklet-cover"), makeToggle(item, item.open ? "Buch schließen" : "Buch öffnen"));
+    } else if (item.type === "pocket") {
+      node.append(makeLabel(item.secondary, "pocket-card"), makeLabel(item.text, "pocket-front"), makeToggle(item, item.open ? "Karte zurückstecken" : "Karte herausziehen"));
+    } else if (item.type === "wheel") {
+      const face = document.createElement("div");
+      face.className = "wheel-face";
+      face.style.transform = "rotate(" + item.rotation + "deg)";
+      face.style.background = "conic-gradient(" + item.bg + " 0 25%, #f7e5ed 25% 50%, #e5f0e7 50% 75%, #fff0ce 75%)";
+      face.append(makeLabel(item.text, "wheel-center"));
+      node.append(face, makeToggle(item, "Drehscheibe drehen"));
+    } else {
+      node.append(makeLabel(item.text));
+    }
+    if (item.type !== "wheel" && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet" && item.type !== "pocket") {
+      node.style.backgroundColor = item.bg;
+    }
+    if (project.selectedId === item.id) node.classList.add("selected");
+    return node;
+  }
+
+  function renderStage() {
+    stageElements.replaceChildren();
+    project.elements.forEach(function (item) {
+      stageElements.append(renderElement(item));
+    });
+    stageEmpty.hidden = project.elements.length > 0;
+    elementCount.textContent = String(project.elements.length);
+    stage.style.backgroundColor = project.paper;
+    paperColor.value = project.paper;
+    selectionLabel.textContent = getSelected() ? typeName(getSelected().type) : "Nichts ausgewählt";
+  }
+
+  function fieldMarkup(label, id, value, options) {
+    options = options || {};
+    const kind = options.kind || "text";
+    const maxLength = options.maxLength || 100;
+    if (kind === "textarea") {
+      return '<label class="field"><span class="field-label">' + label + '</span><textarea id="' + id + '" maxlength="' + maxLength + '">' + escapeHtml(value) + '</textarea></label>';
+    }
+    return '<label class="field"><span class="field-label">' + label + '</span><input id="' + id + '" type="' + kind + '" value="' + escapeHtml(value) + '"' + (kind === "range" ? ' min="' + options.min + '" max="' + options.max + '" step="' + (options.step || 1) + '"' : '') + '></label>';
+  }
+
+  function renderInspector() {
+    const item = getSelected();
+    if (!item) {
+      inspector.innerHTML = '<div class="inspector-empty"><div class="empty-selection-icon">＋</div><strong>Wähle ein Element aus</strong><p>Klicke auf ein Element auf der Arbeitsfläche, um Text, Größe, Farbe und Form anzupassen.</p></div>';
+      return;
+    }
+
+    let html = '<section class="inspector-group"><div class="group-heading"><h3>Inhalt</h3><span class="element-kind">' + typeName(item.type) + '</span></div>';
+    html += fieldMarkup("Vorderseite / Text", "element-text", item.text, { kind: "textarea", maxLength: 500 });
+    if (["flap", "accordion", "booklet", "pocket", "wheel"].includes(item.type)) {
+      html += fieldMarkup(item.type === "accordion" ? "Weitere Felder (mit | trennen)" : "Innenseite / Zusatztext", "element-secondary", item.secondary, { kind: "textarea", maxLength: 500 });
+    }
+    html += '</section>';
+    html += '<section class="inspector-group"><div class="group-heading"><h3>Farben</h3></div><div class="color-controls"><label class="color-control">Papierfarbe<input id="element-bg" type="color" value="' + escapeHtml(item.bg) + '"></label><label class="color-control">Schriftfarbe<input id="element-color" type="color" value="' + escapeHtml(item.color) + '"></label></div></section>';
+    html += '<section class="inspector-group"><div class="group-heading"><h3>Größe & Position</h3></div>';
+    html += '<div class="inline-fields">' + fieldMarkup("Breite", "element-width", item.w, { kind: "range", min: 45, max: 600, step: 5 }) + fieldMarkup("Höhe", "element-height", item.h, { kind: "range", min: 40, max: 500, step: 5 }) + '</div>';
+    html += fieldMarkup("Drehung", "element-rotation", item.rotation, { kind: "range", min: -180, max: 180, step: 5 });
+    html += '</section>';
+    html += '<section class="inspector-group"><div class="group-heading"><h3>Anordnen</h3></div><div class="layer-actions"><button type="button" class="small-action" data-inspector-action="duplicate">⧉ Duplizieren</button><button type="button" class="small-action" data-inspector-action="front">Nach vorne</button><button type="button" class="small-action" data-inspector-action="back">Nach hinten</button><button type="button" class="small-action delete-action" data-inspector-action="delete">Entfernen</button></div></section>';
+    inspector.innerHTML = html;
+    bindInspector(item);
+  }
+
+  function updateItem(property, value) {
+    const item = getSelected();
+    if (!item) return;
+    if (["w", "h", "rotation"].includes(property)) {
+      item[property] = Number(value);
+    } else {
+      item[property] = value;
+    }
+    renderStage();
+    persist();
+  }
+
+  function bindInspector(item) {
+    const textInput = document.getElementById("element-text");
+    const secondaryInput = document.getElementById("element-secondary");
+    if (textInput) textInput.addEventListener("input", function () { updateItem("text", textInput.value); });
+    if (secondaryInput) secondaryInput.addEventListener("input", function () { updateItem("secondary", secondaryInput.value); });
+    const bg = document.getElementById("element-bg");
+    const color = document.getElementById("element-color");
+    const width = document.getElementById("element-width");
+    const height = document.getElementById("element-height");
+    const rotation = document.getElementById("element-rotation");
+    if (bg) bg.addEventListener("input", function () { updateItem("bg", bg.value); });
+    if (color) color.addEventListener("input", function () { updateItem("color", color.value); });
+    if (width) width.addEventListener("input", function () { updateItem("w", width.value); });
+    if (height) height.addEventListener("input", function () { updateItem("h", height.value); });
+    if (rotation) rotation.addEventListener("input", function () { updateItem("rotation", rotation.value); });
+  }
+
+  function addElement(type) {
+    const template = templates[type];
+    if (!template) return;
+    const count = project.elements.length;
+    const item = Object.assign({}, template, {
+      id: uid(),
+      x: clamp(120 + (count % 5) * 38, 0, 1000 - template.w),
+      y: clamp(100 + (count % 4) * 35, 0, 700 - template.h),
+      rotation: 0,
+      open: false
+    });
+    project.elements.push(item);
+    project.selectedId = item.id;
+    renderStage();
+    renderInspector();
+    persist();
+    showToast(typeName(type) + " hinzugefügt");
+  }
+
+  function duplicateSelected() {
+    const item = getSelected();
+    if (!item) return;
+    const copy = Object.assign({}, item, { id: uid(), x: clamp(item.x + 25, 0, 1000 - item.w), y: clamp(item.y + 25, 0, 700 - item.h), open: false });
+    const index = project.elements.indexOf(item);
+    project.elements.splice(index + 1, 0, copy);
+    project.selectedId = copy.id;
+    renderStage();
+    renderInspector();
+    persist();
+  }
+
+  function deleteSelected() {
+    if (!project.selectedId) return;
+    project.elements = project.elements.filter(function (item) { return item.id !== project.selectedId; });
+    project.selectedId = null;
+    renderStage();
+    renderInspector();
+    persist();
+    showToast("Element entfernt");
+  }
+
+  function moveLayer(direction) {
+    const index = project.elements.findIndex(function (item) { return item.id === project.selectedId; });
+    if (index < 0) return;
+    const target = clamp(index + direction, 0, project.elements.length - 1);
+    if (target === index) return;
+    const temp = project.elements[index];
+    project.elements[index] = project.elements[target];
+    project.elements[target] = temp;
+    renderStage();
+    persist();
+  }
+
+  function applyZoom() {
+    scaler.style.width = (Math.round(zoom * 100)) + "%";
+    zoomLabel.textContent = Math.round(zoom * 100) + "%";
+  }
+
+  function download(filename, content, type) {
+    const blob = new Blob([content], { type: type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  document.querySelectorAll("[data-add]").forEach(function (button) {
+    button.addEventListener("click", function () { addElement(button.dataset.add); });
+  });
+
+  stage.addEventListener("pointerdown", function (event) {
+    const itemNode = event.target.closest(".element");
+    if (!itemNode || event.target.closest(".fold-toggle")) return;
+    const item = project.elements.find(function (entry) { return entry.id === itemNode.dataset.id; });
+    if (!item) return;
+    selectElement(item.id);
+    const rect = stage.getBoundingClientRect();
+    drag = {
+      id: item.id,
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left - (item.x / 1000) * rect.width,
+      offsetY: event.clientY - rect.top - (item.y / 700) * rect.height
+    };
+    stage.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  stage.addEventListener("pointermove", function (event) {
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const item = project.elements.find(function (entry) { return entry.id === drag.id; });
+    if (!item) return;
+    const rect = stage.getBoundingClientRect();
+    const x = ((event.clientX - rect.left - drag.offsetX) / rect.width) * 1000;
+    const y = ((event.clientY - rect.top - drag.offsetY) / rect.height) * 700;
+    item.x = Math.round(clamp(x, 0, 1000 - item.w));
+    item.y = Math.round(clamp(y, 0, 700 - item.h));
+    const node = stageElements.querySelector('[data-id="' + item.id + '"]');
+    if (node) {
+      node.style.left = (item.x / 10) + "%";
+      node.style.top = (item.y / 7) + "%";
+    }
+  });
+
+  function finishDrag(event) {
+    if (!drag || (event && drag.pointerId !== event.pointerId)) return;
+    drag = null;
+    persist();
+  }
+  stage.addEventListener("pointerup", finishDrag);
+  stage.addEventListener("pointercancel", finishDrag);
+
+  stage.addEventListener("click", function (event) {
+    const toggle = event.target.closest('[data-action="toggle"]');
+    if (toggle) {
+      const node = toggle.closest(".element");
+      const item = project.elements.find(function (entry) { return entry.id === node.dataset.id; });
+      if (!item) return;
+      if (item.type === "wheel") item.rotation = (item.rotation + 45) % 360;
+      else item.open = !item.open;
+      renderStage();
+      persist();
+      return;
+    }
+    if (!event.target.closest(".element")) {
+      project.selectedId = null;
+      selectElement(null);
+    }
+  });
+
+  inspector.addEventListener("click", function (event) {
+    const button = event.target.closest("[data-inspector-action]");
+    if (!button) return;
+    const action = button.dataset.inspectorAction;
+    if (action === "duplicate") duplicateSelected();
+    if (action === "delete") deleteSelected();
+    if (action === "front") moveLayer(1);
+    if (action === "back") moveLayer(-1);
+  });
+
+  projectTitle.value = project.title;
+  projectTitle.addEventListener("input", function () {
+    project.title = projectTitle.value.slice(0, 60);
+    persist();
+  });
+
+  paperColor.addEventListener("input", function () {
+    project.paper = paperColor.value;
+    stage.style.backgroundColor = project.paper;
+    persist();
+  });
+
+  document.getElementById("new-project").addEventListener("click", function () {
+    if (project.elements.length && !window.confirm("Ein neues Lapbook starten? Dein aktuelles Projekt bleibt nur erhalten, wenn du es vorher exportierst.")) return;
+    project = structuredClone(defaults);
+    projectTitle.value = project.title;
+    renderStage();
+    renderInspector();
+    persist();
+    showToast("Neues Lapbook erstellt");
+  });
+
+  document.getElementById("export-project").addEventListener("click", function () {
+    const safeName = (project.title || "lapbook").trim().replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "lapbook";
+    download(safeName + ".lapbook.json", JSON.stringify({ format: "lapbook-maker", version: 1, title: project.title, paper: project.paper, elements: project.elements }, null, 2), "application/json");
+    showToast("Lapbook exportiert");
+  });
+
+  const importInput = document.getElementById("import-file");
+  document.getElementById("import-project").addEventListener("click", function () { importInput.click(); });
+  importInput.addEventListener("change", function () {
+    const file = importInput.files && importInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function () {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        if (!parsed || !Array.isArray(parsed.elements)) throw new Error("Ungültige Lapbook-Datei");
+        const next = { title: String(parsed.title || "Importiertes Lapbook").slice(0, 60), paper: parsed.paper, elements: parsed.elements, selectedId: null };
+        const valid = next.elements.every(function (item) { return item && templates[item.type] && typeof item.id === "string"; });
+        if (!valid) throw new Error("Die Datei enthält unbekannte Elemente.");
+        project = loadFromImport(next);
+        projectTitle.value = project.title;
+        renderStage();
+        renderInspector();
+        persist();
+        showToast("Lapbook importiert");
+      } catch (error) {
+        showToast(error.message || "Datei konnte nicht importiert werden.");
+      }
+      importInput.value = "";
+    };
+    reader.onerror = function () { showToast("Datei konnte nicht gelesen werden."); importInput.value = ""; };
+    reader.readAsText(file);
+  });
+
+  function loadFromImport(parsed) {
+    const safe = {
+      title: String(parsed.title || "Importiertes Lapbook").slice(0, 60),
+      paper: /^#[0-9a-f]{6}$/i.test(parsed.paper) ? parsed.paper : defaults.paper,
+      selectedId: null,
+      elements: parsed.elements.map(function (item) {
+        const base = templates[item.type];
+        return {
+          id: uid(), type: item.type,
+          x: clamp(Number(item.x) || 0, 0, 1000),
+          y: clamp(Number(item.y) || 0, 0, 700),
+          w: clamp(Number(item.w) || base.w, 45, 600),
+          h: clamp(Number(item.h) || base.h, 40, 500),
+          rotation: clamp(Number(item.rotation) || 0, -180, 360),
+          text: String(item.text == null ? base.text : item.text).slice(0, 500),
+          secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
+          bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
+          color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
+          open: Boolean(item.open)
+        };
+      })
+    };
+    return safe;
+  }
+
+  document.getElementById("print-project").addEventListener("click", function () { window.print(); });
+  document.getElementById("zoom-in").addEventListener("click", function () { zoom = clamp(zoom + 0.1, 0.6, 1.5); applyZoom(); });
+  document.getElementById("zoom-out").addEventListener("click", function () { zoom = clamp(zoom - 0.1, 0.6, 1.5); applyZoom(); });
+  document.getElementById("zoom-fit").addEventListener("click", function () { zoom = 1; applyZoom(); });
+
+  document.addEventListener("keydown", function (event) {
+    const tag = event.target && event.target.tagName;
+    const editing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || event.target.isContentEditable;
+    if (!editing && (event.key === "Delete" || event.key === "Backspace")) {
+      event.preventDefault();
+      deleteSelected();
+    }
+    if (!editing && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "d") {
+      event.preventDefault();
+      duplicateSelected();
+    }
+    if (event.key === "Escape") {
+      project.selectedId = null;
+      selectElement(null);
+    }
+  });
+
+  renderStage();
+  renderInspector();
+  persist();
+  applyZoom();
+})();
