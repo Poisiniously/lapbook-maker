@@ -389,3 +389,87 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
   .leporello-layout .leporello-panel { flex: 1 1 25% !important; }
   .foldsheet-layout .foldsheet-panel { height: 33.333% !important; }
 }
+
+
+/* Expandable per-part sidebar editor */
+.parts-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--border-color, #e8e3ee);
+}
+.parts-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-color, #40384a);
+  font-size: 11px;
+}
+.parts-editor-heading span {
+  color: #9a91a5;
+  font-size: 10px;
+  font-weight: 500;
+}
+.part-field-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: end;
+  gap: 7px;
+}
+.part-field-row .field { min-width: 0; }
+.part-field-row textarea {
+  min-height: 54px;
+  resize: vertical;
+}
+.part-remove {
+  width: 28px;
+  height: 32px;
+  margin-bottom: 1px;
+  border: 1px solid #eadde5;
+  border-radius: 8px;
+  background: #fff7fa;
+  color: #a45c78;
+  font-size: 18px;
+  cursor: pointer;
+}
+.part-remove:hover:not(:disabled) { background: #f8e7ef; }
+.part-remove:disabled { opacity: .3; cursor: not-allowed; }
+.part-add {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px dashed #c9bbd8;
+  border-radius: 8px;
+  background: #faf7fd;
+  color: #715b8b;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.part-add:hover:not(:disabled) { background: #f2ebfa; border-color: #a994c4; }
+.part-add:disabled { opacity: .4; cursor: not-allowed; }
+#flower-center-sides {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid var(--border-color, #ded8e5);
+  border-radius: 8px;
+  background: var(--input-bg, #fff);
+  color: var(--text-color, #40384a);
+  font: inherit;
+}
+.flower-center {
+  display: grid;
+  place-items: center;
+  border: 2px solid #72576a;
+  border-radius: 0;
+  padding: 5px;
+  overflow-wrap: anywhere;
+}
+.flower-petal {
+  width: 34%;
+  height: 36%;
+  border-radius: 58% 58% 48% 48%;
+  transform-origin: center center;
+}
