@@ -677,6 +677,7 @@
       return;
     }
 
+    const selectedIndex = project.elements.indexOf(item);
     const primaryLabels = {
       accordion: "Erstes Feld", wheel: "Text in der Mitte", flower: "Text in der Mitte",
       pocket4: "Beschriftung der Tasche", fan1: "Titel", fan2: "Titel",
@@ -714,7 +715,7 @@
     html += '<div class="inline-fields position-fields">' + fieldMarkup("X-Position", "element-x", item.x, { kind: "number", min: 0, max: 1000, step: 1 }) + fieldMarkup("Y-Position", "element-y", item.y, { kind: "number", min: 0, max: 700, step: 1 }) + '</div>';
     html += fieldMarkup("Drehung", "element-rotation", item.rotation, { kind: "range", min: -360, max: 360, step: 5 });
     html += '</section>';
-    html += '<section class="inspector-group"><div class="group-heading"><h3>Anordnen</h3></div><div class="layer-actions"><button type="button" class="small-action" data-inspector-action="duplicate">⧉ Duplizieren</button><button type="button" class="small-action" data-inspector-action="front">Nach vorne</button><button type="button" class="small-action" data-inspector-action="back">Nach hinten</button><button type="button" class="small-action delete-action" data-inspector-action="delete">Entfernen</button></div></section>';
+    html += '<section class="inspector-group"><div class="group-heading"><h3>Anordnen</h3></div><div class="layer-actions"><button type="button" class="small-action" data-inspector-action="duplicate">⧉ Duplizieren</button><button type="button" class="small-action" data-inspector-action="front"' + (selectedIndex >= project.elements.length - 1 ? ' disabled' : '') + '>Ebene hoch</button><button type="button" class="small-action" data-inspector-action="back"' + (selectedIndex <= 0 ? ' disabled' : '') + '>Ebene runter</button><button type="button" class="small-action delete-action" data-inspector-action="delete">Entfernen</button></div></section>';
     inspector.innerHTML = html;
     bindInspector(item);
   }
