@@ -54,7 +54,7 @@
     "foldsheet", "hexfold", "leporello-figure", "flipflap", "foldheart"
   ]);
   const multiPartCounts = {
-    flap: 1, accordion: 2, booklet: 2, pocket: 1, wheel: 4, flower: 5, pocket4: 4,
+    accordion: 2, wheel: 4, flower: 5, pocket4: 4,
     fan1: 4, fan2: 4, leporello: 4, foldcross: 4, foldsheet: 3,
     hexfold: 2, "leporello-figure": 4, flipflap: 4, foldheart: 4
   };
@@ -501,7 +501,7 @@
       body.append(inside, front);
       node.append(body, makeToggle(item, item.open ? "Klappe schließen" : "Klappe öffnen"));
     } else if (item.type === "accordion") {
-      const parts = [item.text].concat(item.secondary.split("|")).slice(0, 3);
+      const parts = [item.text].concat(getPanelTexts(item, 2)).slice(0, 13);
       const panels = document.createElement("div");
       panels.className = "accordion-panels";
       parts.forEach(function (part, index) {
@@ -586,7 +586,7 @@
     } else {
       html += fieldMarkup("Vorderseite / Text", "element-text", item.text, { kind: "textarea", maxLength: 500 });
     }
-    if (multiPartCounts[item.type] || ["flap", "accordion", "booklet", "pocket"].includes(item.type)) {
+    if (multiPartCounts[item.type]) {
       syncParts(item);
       html += renderPartFields(item);
     }
