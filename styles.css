@@ -269,6 +269,7 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .wheel-sector { display: grid; place-items: center; padding: 10px 7px; border: 1px solid rgba(65,55,70,.5); font-size: .7em; text-align: center; }
 .wheel-hub { position: absolute; left: 37%; top: 37%; width: 26%; height: 26%; display: grid; place-items: center; border: 2px solid #49444d; border-radius: 50%; background: #fffdf7; color: #51445e; font-size: .68em; font-weight: 750; }
 .wheel-layout .fold-toggle { right: 2%; bottom: 2%; }
+.wheel-pivot { left: 50%; top: 0; bottom: 0; border-left: 1.5px dashed #655d70; }
 
 .fan1-blade { left: 9%; top: 38%; width: 84%; height: 24%; transform-origin: 8% 50%; border-radius: 1px 8px 8px 1px; }
 .fan1-layout:not(.is-open) .fan1-blade { transform: rotate(0deg) !important; }
@@ -376,7 +377,8 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
   .tools-panel { max-height: none; overflow: visible; }
 }
 @media (max-width: 580px) {
-  .guide-legend { padding: 0 12px 8px; gap: 9px; font-size: 8px; }
+  .workspace-toolbar { height: auto; min-height: 53px; flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
+  .guide-legend { width: 100%; margin: 0; padding: 0 2px 2px; gap: 9px; font-size: 8px; }
   .guide-toggle { padding: 4px 6px; }
 }
 @media print {
