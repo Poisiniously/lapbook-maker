@@ -225,12 +225,21 @@
 
   function renderPartFields(item) {
     const parts = getPanelTexts(item, multiPartCounts[item.type] || 2);
+    const partNames = {
+      accordion: "Akkordeon-Teil", wheel: "Segment", flower: "Blütenblatt",
+      pocket4: "Karte", fan1: "Fächerblatt", fan2: "Fächerteil",
+      leporello: "Seite", foldcross: "Klappe", foldsheet: "Feld",
+      hexfold: "Innenseite", "leporello-figure": "Körperteil",
+      flipflap: "Klappe", foldheart: "Herzblatt"
+    };
+    const partName = partNames[item.type] || "Teil";
     let html = '<div class="parts-editor"><div class="parts-editor-heading"><strong>Einzelne Elemente</strong><span>' + parts.length + ' Teile</span></div>';
     parts.forEach(function (part, index) {
-      html += '<div class="part-field-row"><label class="field"><span class="field-label">Teil ' + (index + 1) + '</span><textarea data-part-index="' + index + '" maxlength="500">' + escapeHtml(part) + '</textarea></label>';
-      html += '<button type="button" class="part-remove" data-part-remove="' + index + '" aria-label="Teil ' + (index + 1) + ' entfernen" title="Teil entfernen"' + (parts.length <= (minPartCounts[item.type] || 1) ? ' disabled' : '') + '>−</button></div>';
+      const label = partName + " " + (index + 1);
+      html += '<div class="part-field-row"><label class="field"><span class="field-label">' + label + '</span><textarea data-part-index="' + index + '" maxlength="500">' + escapeHtml(part) + '</textarea></label>';
+      html += '<button type="button" class="part-remove" data-part-remove="' + index + '" aria-label="' + label + ' entfernen" title="Teil entfernen"' + (parts.length <= (minPartCounts[item.type] || 1) ? ' disabled' : '') + '>−</button></div>';
     });
-    html += '<button type="button" class="part-add" data-part-add' + (parts.length >= 12 ? ' disabled' : '') + '>＋ Teil hinzufügen</button></div>';
+    html += '<button type="button" class="part-add" data-part-add' + (parts.length >= 12 ? ' disabled' : '') + '>＋ Element hinzufügen</button></div>';
     return html;
   }
 
