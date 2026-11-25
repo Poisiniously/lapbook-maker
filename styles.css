@@ -30,6 +30,9 @@ button { cursor: pointer; }
 .button:hover { border-color: #d5c9ef; background: #faf8ff; transform: translateY(-1px); }
 .button-primary { color: white; border-color: var(--purple); background: var(--purple); box-shadow: 0 4px 12px rgba(121,87,200,.2); }
 .button-primary:hover { background: var(--purple-dark); color: white; border-color: var(--purple-dark); }
+.button-danger { color: #a34d68; border-color: #f0dce4; background: #fff9fb; }
+.button-danger:hover { color: #913b57; border-color: #e7b9ca; background: #fff0f5; }
+
 .editor-layout { min-height: calc(100vh - 70px); display: grid; grid-template-columns: 252px minmax(360px, 1fr) 278px; }
 .panel { background: var(--panel); min-width: 0; }
 .tools-panel { padding: 23px 17px 18px; border-right: 1px solid var(--line); }
