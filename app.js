@@ -73,7 +73,7 @@
           y: clamp(Number(item.y) || 0, 0, 700),
           w: clamp(Number(item.w) || base.w, 45, 600),
           h: clamp(Number(item.h) || base.h, 40, 500),
-          rotation: clamp(Number(item.rotation) || 0, -180, 180),
+          rotation: clamp(Number(item.rotation) || 0, -360, 360),
           text: String(item.text == null ? base.text : item.text).slice(0, 500),
           secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
           bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
@@ -164,7 +164,7 @@
     node.style.top = (item.y / 7) + "%";
     node.style.width = (item.w / 10) + "%";
     node.style.height = (item.h / 7) + "%";
-    node.style.transform = "rotate(" + item.rotation + "deg)";
+    node.style.transform = item.type === "wheel" ? "rotate(0deg)" : "rotate(" + item.rotation + "deg)";
     node.style.zIndex = String(3 + project.elements.indexOf(item));
     node.style.color = item.color;
 
@@ -179,18 +179,37 @@
       body.className = "flap-body";
       const inside = makeLabel(item.secondary, "flap-inside");
       const front = makeLabel(item.text, "flap-front");
+      inside.style.color = item.color;
+      inside.style.borderColor = item.bg;
+      front.style.backgroundColor = item.bg;
+      front.style.color = item.color;
       body.append(inside, front);
       node.append(body, makeToggle(item, item.open ? "Klappe schließen" : "Klappe öffnen"));
     } else if (item.type === "accordion") {
       const parts = [item.text].concat(item.secondary.split("|")).slice(0, 3);
       const panels = document.createElement("div");
       panels.className = "accordion-panels";
-      parts.forEach(function (part) { panels.append(makeLabel(part, "accordion-panel")); });
+      parts.forEach(function (part, index) {
+        const panel = makeLabel(part, "accordion-panel");
+        panel.style.color = item.color;
+        if (index === 0) panel.style.backgroundColor = item.bg;
+        panels.append(panel);
+      });
       node.append(panels, makeToggle(item, item.open ? "Akkordeon schließen" : "Akkordeon auffalten"));
     } else if (item.type === "booklet") {
-      node.append(makeLabel(item.secondary, "booklet-inside"), makeLabel(item.text, "booklet-cover"), makeToggle(item, item.open ? "Buch schließen" : "Buch öffnen"));
+      const inside = makeLabel(item.secondary, "booklet-inside");
+      const cover = makeLabel(item.text, "booklet-cover");
+      inside.style.color = item.color;
+      cover.style.backgroundColor = item.bg;
+      cover.style.color = item.color;
+      node.append(inside, cover, makeToggle(item, item.open ? "Buch schließen" : "Buch öffnen"));
     } else if (item.type === "pocket") {
-      node.append(makeLabel(item.secondary, "pocket-card"), makeLabel(item.text, "pocket-front"), makeToggle(item, item.open ? "Karte zurückstecken" : "Karte herausziehen"));
+      const card = makeLabel(item.secondary, "pocket-card");
+      const front = makeLabel(item.text, "pocket-front");
+      card.style.color = item.color;
+      front.style.backgroundColor = item.bg;
+      front.style.color = item.color;
+      node.append(card, front, makeToggle(item, item.open ? "Karte zurückstecken" : "Karte herausziehen"));
     } else if (item.type === "wheel") {
       const face = document.createElement("div");
       face.className = "wheel-face";
@@ -246,7 +265,7 @@
     html += '<section class="inspector-group"><div class="group-heading"><h3>Farben</h3></div><div class="color-controls"><label class="color-control">Papierfarbe<input id="element-bg" type="color" value="' + escapeHtml(item.bg) + '"></label><label class="color-control">Schriftfarbe<input id="element-color" type="color" value="' + escapeHtml(item.color) + '"></label></div></section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Größe & Position</h3></div>';
     html += '<div class="inline-fields">' + fieldMarkup("Breite", "element-width", item.w, { kind: "range", min: 45, max: 600, step: 5 }) + fieldMarkup("Höhe", "element-height", item.h, { kind: "range", min: 40, max: 500, step: 5 }) + '</div>';
-    html += fieldMarkup("Drehung", "element-rotation", item.rotation, { kind: "range", min: -180, max: 180, step: 5 });
+    html += fieldMarkup("Drehung", "element-rotation", item.rotation, { kind: "range", min: -360, max: 360, step: 5 });
     html += '</section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Anordnen</h3></div><div class="layer-actions"><button type="button" class="small-action" data-inspector-action="duplicate">⧉ Duplizieren</button><button type="button" class="small-action" data-inspector-action="front">Nach vorne</button><button type="button" class="small-action" data-inspector-action="back">Nach hinten</button><button type="button" class="small-action delete-action" data-inspector-action="delete">Entfernen</button></div></section>';
     inspector.innerHTML = html;
@@ -494,7 +513,7 @@
           y: clamp(Number(item.y) || 0, 0, 700),
           w: clamp(Number(item.w) || base.w, 45, 600),
           h: clamp(Number(item.h) || base.h, 40, 500),
-          rotation: clamp(Number(item.rotation) || 0, -180, 360),
+          rotation: clamp(Number(item.rotation) || 0, -360, 360),
           text: String(item.text == null ? base.text : item.text).slice(0, 500),
           secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
           bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
