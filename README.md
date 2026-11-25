@@ -25,3 +25,11 @@ This repository is a static website. In GitHub, open **Settings → Pages**, sel
 
 Projects are saved in the browser on the current device. Use **Exportieren** to keep a portable backup or move a project to another browser.
 
+
+## Lapbook-template catalog
+
+The editor includes the paper constructions from the RESTLOS GLÜCKLICH / Sarah Wiener Stiftung worksheet catalog: flower fold, four-card pocket, two fan styles, accordion leporello, folding cross, tri-fold sheet, hexagon fold, figure leporello, flip-flap, and folding heart. The spinning wheel has four editable segments.
+
+Each construction can be edited on the canvas. Use the fold controls or individual panels to preview how it opens. The **Linien** control switches construction guides on and off; the print view keeps cut, fold, and glue guides visible. Extra panel texts are separated with `|` in the inspector.
+
+Reference worksheet: [Meinem Schulessen auf der Spur – Lapbook-Kopiervorlagen](https://www.restlos-gluecklich.berlin/wp-content/uploads/2021/08/MeinemSchulessenaufderSpur_Lapbook_Kopiervorlagen_V2.pdf).
