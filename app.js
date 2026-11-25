@@ -310,7 +310,10 @@
       addConstructionGuide(layout, "guide-glue flower-glue");
     } else if (item.type === "pocket4") {
       labels.forEach(function (label, index) {
-        layout.append(makeTemplatePanel(item, index, "pocket4-card pocket4-card-" + index, label));
+        const card = makeTemplatePanel(item, index, "pocket4-card pocket4-card-" + index, label);
+        card.style.width = Math.min(37, 88 / count) + "%";
+        card.style.left = (6 + index * (88 / count)) + "%";
+        layout.append(card);
       });
       const pocket = document.createElement("div");
       pocket.className = "pocket4-front";
@@ -363,9 +366,16 @@
       layout.append(makeToggle(item, "Leporello auf- oder zusammenfalten"));
       addConstructionGuide(layout, "guide-cut leporello-cut");
     } else if (item.type === "foldcross") {
-      const positions = ["cross-top", "cross-right", "cross-bottom", "cross-left"];
       labels.forEach(function (label, index) {
-        layout.append(makeTemplatePanel(item, index, "cross-flap " + positions[index], label));
+        const flap = makeTemplatePanel(item, index, "cross-flap cross-flap-" + index, label);
+        const angle = -90 + index * 360 / count;
+        const radians = angle * Math.PI / 180;
+        flap.style.width = "34%";
+        flap.style.height = "28%";
+        flap.style.left = (50 + 37 * Math.cos(radians) - 17) + "%";
+        flap.style.top = (50 + 37 * Math.sin(radians) - 14) + "%";
+        flap.style.transform = "rotate(" + (angle + 90) + "deg)";
+        layout.append(flap);
       });
       const middle = document.createElement("div");
       middle.className = "cross-center";
