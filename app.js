@@ -326,7 +326,8 @@
         sector.textContent = label;
         sector.style.left = (50 + 29 * Math.cos(angle)) + "%";
         sector.style.top = (50 + 29 * Math.sin(angle)) + "%";
-        sector.style.width = Math.max(18, Math.min(42, 182 / count - 2)) + "%";
+        sector.style.width = Math.max(11, Math.min(42, 150 / count - 1)) + "%";
+        sector.style.fontSize = Math.max(0.52, 0.76 - count * 0.02) + "em";
         sector.style.transform = "translate(-50%, -50%)";
         sector.style.color = item.color;
         disc.append(sector);
@@ -673,7 +674,10 @@
     const bounds = ["range", "number"].includes(kind)
       ? ' min="' + options.min + '" max="' + options.max + '" step="' + (options.step || 1) + '"'
       : '';
-    return '<label class="field"><span class="field-label">' + label + '</span><input id="' + id + '" type="' + kind + '" value="' + escapeHtml(value) + '"' + bounds + '></label>';
+    const valueDisplay = kind === "range"
+      ? '<output class="field-value" id="' + id + '-value">' + escapeHtml(value) + '</output>'
+      : '';
+    return '<label class="field"><span class="field-label">' + label + valueDisplay + '</span><input id="' + id + '" type="' + kind + '" value="' + escapeHtml(value) + '"' + bounds + '></label>';
   }
 
   function renderInspector() {
@@ -771,6 +775,11 @@
       const yInput = document.getElementById("element-y");
       if (xInput) xInput.value = String(item.x);
       if (yInput) yInput.value = String(item.y);
+      const rangeIds = { w: "element-width-value", h: "element-height-value", rotation: "element-rotation-value" };
+      if (rangeIds[property]) {
+        const output = document.getElementById(rangeIds[property]);
+        if (output) output.textContent = String(item[property]);
+      }
     } else {
       item[property] = value;
     }
@@ -1057,6 +1066,14 @@
         const next = { title: String(parsed.title || "Importiertes Lapbook").slice(0, 60), paper: parsed.paper, guides: parsed.guides !== false, elements: parsed.elements, selectedId: null };
         const valid = next.elements.every(function (item) { return item && typeof item === "object" && templates[item.type]; });
         if (!valid) throw new Error("Die Datei enthält unbekannte Elemente.");
+
+        const hasCurrentProject = project.elements.length > 0 || project.title !== defaults.title || project.paper !== defaults.paper || project.guides !== defaults.guides;
+        if (hasCurrentProject && !window.confirm("Der Import ersetzt dein aktuelles Lapbook. Möchtest du fortfahren?")) {
+          showToast("Import abgebrochen");
+          importInput.value = "";
+          return;
+        }
+
         project = loadFromImport(next);
         projectTitle.value = project.title;
         renderStage();
