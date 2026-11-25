@@ -179,6 +179,213 @@
     return button;
   }
 
+  function getPanelTexts(item, count) {
+    const values = String(item.secondary || "").split("|").map(function (value) { return value.trim(); });
+    while (values.length < count) values.push("Feld " + (values.length + 1));
+    return values.slice(0, count);
+  }
+
+  function addConstructionGuide(parent, className) {
+    const guide = document.createElement("span");
+    guide.className = "construction-guide " + className;
+    guide.setAttribute("aria-hidden", "true");
+    parent.append(guide);
+  }
+
+  function makeTemplatePanel(item, index, className, text) {
+    const panel = document.createElement("button");
+    panel.type = "button";
+    panel.className = "template-panel " + className;
+    panel.dataset.action = "panel-toggle";
+    panel.dataset.panelIndex = String(index);
+    panel.textContent = text;
+    panel.style.backgroundColor = item.bg;
+    panel.style.color = item.color;
+    panel.style.borderColor = item.color;
+    panel.setAttribute("aria-pressed", String((item.openPanels || []).includes(index)));
+    if ((item.openPanels || []).includes(index)) panel.classList.add("is-open");
+    return panel;
+  }
+
+  function renderCatalogElement(item, node) {
+    const layout = document.createElement("div");
+    layout.className = "catalog-layout " + item.type + "-layout" + (item.open ? " is-open" : "");
+    const count = item.type === "flower" ? 5
+      : item.type === "wheel" ? 4
+      : item.type === "foldsheet" ? 3
+      : (["foldcross", "fan1", "fan2", "leporello-figure", "flipflap", "foldheart", "pocket4"].includes(item.type) ? 4 : 2);
+    const labels = getPanelTexts(item, count);
+    const center = document.createElement("div");
+    center.className = "template-center";
+    center.textContent = item.text;
+    center.style.color = item.color;
+
+    if (item.type === "wheel") {
+      const disc = document.createElement("div");
+      disc.className = "wheel-disc";
+      disc.style.transform = "rotate(" + item.rotation + "deg)";
+      labels.forEach(function (label, index) {
+        const sector = document.createElement("div");
+        sector.className = "wheel-sector wheel-sector-" + index;
+        sector.textContent = label;
+        sector.style.backgroundColor = index % 2 ? "#f5e7ef" : item.bg;
+        sector.style.color = item.color;
+        disc.append(sector);
+      });
+      const hub = document.createElement("div");
+      hub.className = "wheel-hub";
+      hub.textContent = item.text;
+      disc.append(hub);
+      layout.append(disc, makeToggle(item, "Drehscheibe um 90 Grad drehen"));
+      addConstructionGuide(layout, "guide-fold wheel-pivot");
+      addConstructionGuide(layout, "guide-cut guide-circle");
+    } else if (item.type === "flower") {
+      labels.forEach(function (label, index) {
+        layout.append(makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label));
+      });
+      center.classList.add("flower-center");
+      layout.append(center);
+      addConstructionGuide(layout, "guide-fold flower-fold flower-fold-a");
+      addConstructionGuide(layout, "guide-fold flower-fold flower-fold-b");
+      addConstructionGuide(layout, "guide-glue flower-glue");
+    } else if (item.type === "pocket4") {
+      labels.forEach(function (label, index) {
+        layout.append(makeTemplatePanel(item, index, "pocket4-card pocket4-card-" + index, label));
+      });
+      const pocket = document.createElement("div");
+      pocket.className = "pocket4-front";
+      pocket.textContent = item.text;
+      pocket.style.backgroundColor = item.bg;
+      pocket.style.color = item.color;
+      layout.append(pocket);
+      addConstructionGuide(layout, "guide-cut pocket4-cut");
+      addConstructionGuide(layout, "guide-fold pocket4-fold");
+      addConstructionGuide(layout, "guide-glue pocket4-glue");
+    } else if (item.type === "fan1") {
+      const angles = [-22, -8, 7, 22];
+      labels.forEach(function (label, index) {
+        const blade = makeTemplatePanel(item, index, "fan1-blade fan1-blade-" + index, label);
+        const angle = angles[index] + ((item.openPanels || []).includes(index) ? (index < 2 ? -9 : 9) : 0);
+        blade.style.transform = "rotate(" + angle + "deg)";
+        blade.style.zIndex = String(index + 2);
+        layout.append(blade);
+      });
+      const pivot = document.createElement("span");
+      pivot.className = "fan-pivot";
+      layout.append(pivot, makeToggle(item, "Fächer auffächern"));
+      addConstructionGuide(layout, "guide-cut fan-cut");
+      addConstructionGuide(layout, "guide-fold fan-pivot-line");
+    } else if (item.type === "fan2") {
+      const glue = document.createElement("span");
+      glue.className = "fan2-glue";
+      glue.textContent = "Kleben";
+      layout.append(glue);
+      labels.forEach(function (label, index) {
+        const strip = makeTemplatePanel(item, index, "fan2-strip fan2-strip-" + index, label);
+        strip.style.top = (index * 19) + "%";
+        strip.style.zIndex = String(index + 1);
+        if ((item.openPanels || []).includes(index)) strip.classList.add("is-expanded");
+        layout.append(strip);
+      });
+      addConstructionGuide(layout, "guide-fold fan2-fold");
+      addConstructionGuide(layout, "guide-glue fan2-glue-guide");
+    } else if (item.type === "leporello") {
+      labels.forEach(function (label, index) {
+        const panel = document.createElement("div");
+        panel.className = "leporello-panel";
+        panel.textContent = label;
+        panel.style.backgroundColor = index % 2 ? "#f3e8f3" : item.bg;
+        panel.style.color = item.color;
+        layout.append(panel);
+        if (index < 3) addConstructionGuide(layout, "guide-fold leporello-crease crease-" + index);
+      });
+      layout.append(makeToggle(item, "Leporello auf- oder zusammenfalten"));
+      addConstructionGuide(layout, "guide-cut leporello-cut");
+    } else if (item.type === "foldcross") {
+      const positions = ["cross-top", "cross-right", "cross-bottom", "cross-left"];
+      labels.forEach(function (label, index) {
+        layout.append(makeTemplatePanel(item, index, "cross-flap " + positions[index], label));
+      });
+      const middle = document.createElement("div");
+      middle.className = "cross-center";
+      middle.textContent = item.text;
+      middle.style.backgroundColor = item.bg;
+      middle.style.color = item.color;
+      layout.append(middle);
+      addConstructionGuide(layout, "guide-fold cross-fold-v");
+      addConstructionGuide(layout, "guide-fold cross-fold-h");
+    } else if (item.type === "foldsheet") {
+      labels.forEach(function (label, index) {
+        const panel = document.createElement("div");
+        panel.className = "foldsheet-panel foldsheet-panel-" + index;
+        panel.textContent = label;
+        panel.style.backgroundColor = index % 2 ? "#f4eafa" : item.bg;
+        panel.style.color = item.color;
+        layout.append(panel);
+        if (index < 2) addConstructionGuide(layout, "guide-fold foldsheet-crease crease-" + index);
+      });
+      layout.append(makeToggle(item, "Faltblatt auf- oder zusammenfalten"));
+      addConstructionGuide(layout, "guide-cut foldsheet-cut");
+    } else if (item.type === "hexfold") {
+      const lower = document.createElement("div");
+      lower.className = "hexfold-part hexfold-lower";
+      lower.textContent = labels[0];
+      lower.style.backgroundColor = item.bg;
+      lower.style.color = item.color;
+      const upper = document.createElement("div");
+      upper.className = "hexfold-part hexfold-upper";
+      upper.textContent = item.text;
+      upper.style.backgroundColor = item.bg;
+      upper.style.color = item.color;
+      layout.append(lower, upper, makeToggle(item, "Sechseck auf- oder zuklappen"));
+      addConstructionGuide(layout, "guide-fold hexfold-crease");
+      addConstructionGuide(layout, "guide-cut hexfold-cut");
+    } else if (item.type === "leporello-figure") {
+      const head = document.createElement("div");
+      head.className = "figure-head";
+      head.textContent = "●";
+      const arms = document.createElement("div");
+      arms.className = "figure-arms";
+      const body = document.createElement("div");
+      body.className = "figure-body";
+      labels.forEach(function (label, index) {
+        const panel = document.createElement("div");
+        panel.className = "figure-panel";
+        panel.textContent = label;
+        panel.style.backgroundColor = index % 2 ? "#f2eafa" : item.bg;
+        panel.style.color = item.color;
+        body.append(panel);
+        if (index < 3) addConstructionGuide(body, "guide-fold figure-crease crease-" + index);
+      });
+      const title = document.createElement("div");
+      title.className = "figure-title";
+      title.textContent = item.text;
+      layout.append(head, arms, title, body, makeToggle(item, "Figur-Leporello auffalten"));
+      addConstructionGuide(layout, "guide-cut figure-cut");
+      addConstructionGuide(layout, "guide-glue figure-glue");
+    } else if (item.type === "flipflap") {
+      const backing = document.createElement("div");
+      backing.className = "flipflap-backing";
+      backing.textContent = item.text;
+      labels.forEach(function (label, index) {
+        layout.append(makeTemplatePanel(item, index, "flipflap-panel flipflap-panel-" + index, label));
+      });
+      layout.append(backing);
+      addConstructionGuide(layout, "guide-fold flipflap-crease");
+      addConstructionGuide(layout, "guide-cut flipflap-cut");
+      addConstructionGuide(layout, "guide-glue flipflap-glue");
+    } else if (item.type === "foldheart") {
+      labels.forEach(function (label, index) {
+        layout.append(makeTemplatePanel(item, index, "heart-petal heart-petal-" + index, label));
+      });
+      center.classList.add("heart-center");
+      layout.append(center);
+      addConstructionGuide(layout, "guide-fold heart-fold heart-fold-a");
+      addConstructionGuide(layout, "guide-fold heart-fold heart-fold-b");
+    }
+    node.append(layout);
+  }
+
   function renderElement(item) {
     const node = document.createElement("div");
     node.className = "element type-" + item.type + (item.open ? " is-open" : "");
