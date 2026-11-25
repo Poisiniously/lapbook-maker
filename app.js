@@ -324,6 +324,8 @@
         sector.textContent = label;
         sector.style.left = (50 + 29 * Math.cos(angle)) + "%";
         sector.style.top = (50 + 29 * Math.sin(angle)) + "%";
+        sector.style.width = Math.max(18, Math.min(42, 182 / count - 2)) + "%";
+        sector.style.transform = "translate(-50%, -50%)";
         sector.style.color = item.color;
         disc.append(sector);
       });
@@ -346,6 +348,7 @@
         petal.style.height = petalHeight + "%";
         petal.style.left = (50 + 31 * Math.cos(radians) - petalWidth / 2) + "%";
         petal.style.top = (50 + 31 * Math.sin(radians) - petalHeight / 2) + "%";
+        petal.style.setProperty("--base-rotation", (angle + 90) + "deg");
         petal.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(petal);
       });
@@ -382,6 +385,7 @@
         const blade = makeTemplatePanel(item, index, "fan1-blade fan1-blade-" + index, label);
         const baseAngle = count === 1 ? 0 : -25 + index * 50 / (count - 1);
         const angle = baseAngle + ((item.openPanels || []).includes(index) ? (index < count / 2 ? -7 : 7) : 0);
+        blade.style.setProperty("--fan-angle", angle + "deg");
         blade.style.transform = "rotate(" + angle + "deg)";
         blade.style.zIndex = String(index + 2);
         layout.append(blade);
@@ -539,6 +543,7 @@
         petal.style.height = heartHeight + "%";
         petal.style.left = (50 + 31 * Math.cos(radians) - heartWidth / 2) + "%";
         petal.style.top = (50 + 31 * Math.sin(radians) - heartHeight / 2) + "%";
+        petal.style.setProperty("--base-rotation", (angle + 90) + "deg");
         petal.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(petal);
       });
