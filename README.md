@@ -30,12 +30,14 @@ Projects are saved in the browser on the current device. Use **Exportieren** to 
 
 The editor includes the paper constructions from the RESTLOS GLÜCKLICH / Sarah Wiener Stiftung worksheet catalog: flower fold, four-card pocket, two fan styles, accordion leporello, folding cross, tri-fold sheet, hexagon fold, figure leporello, flip-flap, and folding heart. The spinning wheel has four editable segments.
 
-Each construction can be edited on the canvas. Use the fold controls or individual panels to preview how it opens. The **Linien** control switches construction guides on and off; the print view keeps cut, fold, and glue guides visible. Extra panel texts are separated with `|` in the inspector.
+Each construction can be edited on the canvas. Use the fold controls or individual panels to preview how it opens. The **Linien** control switches construction guides on and off; the print view keeps cut, fold, and glue guides visible.
 
 Reference worksheet: [Meinem Schulessen auf der Spur – Lapbook-Kopiervorlagen](https://www.restlos-gluecklich.berlin/wp-content/uploads/2021/08/MeinemSchulessenaufderSpur_Lapbook_Kopiervorlagen_V2.pdf).
 
 ### Individual panel editing
 
-Multi-part elements now show one separate text field per panel in the sidebar. Use **＋ Teil hinzufügen** to add up to 12 panels, or **−** beside a panel to remove it. The text is saved with the project and included in JSON exports.
+Multi-part elements show a separate text field for every panel in the sidebar. Use **＋ Teil hinzufügen** to add up to 12 panels, or **−** beside a panel to remove one. The minimum number depends on the construction. Panel text is saved with the project and included in JSON exports.
 
-The flower construction lays out its petals dynamically. Its center is a polygon whose number of corners follows the petal count by default; changing **Ecken des Mittelteils** lets you override that number (3–12).
+For single foldable elements, the front and inside/card text also have separate fields. The flower automatically matches its center polygon's number of corners to its petal count. Disable **Seitenzahl an Blütenblätter koppeln** to choose the number manually (3–12).
+
+All elements share the same controls for colors, width, height, X/Y position, rotation, duplication, deletion, and layer order. Dragging an element also updates its numeric position fields. Zoom affects the working view only; printing uses the full lapbook canvas and includes the construction guides.
