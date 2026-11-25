@@ -33,3 +33,9 @@ The editor includes the paper constructions from the RESTLOS GLÜCKLICH / Sarah 
 Each construction can be edited on the canvas. Use the fold controls or individual panels to preview how it opens. The **Linien** control switches construction guides on and off; the print view keeps cut, fold, and glue guides visible. Extra panel texts are separated with `|` in the inspector.
 
 Reference worksheet: [Meinem Schulessen auf der Spur – Lapbook-Kopiervorlagen](https://www.restlos-gluecklich.berlin/wp-content/uploads/2021/08/MeinemSchulessenaufderSpur_Lapbook_Kopiervorlagen_V2.pdf).
+
+### Individual panel editing
+
+Multi-part elements now show one separate text field per panel in the sidebar. Use **＋ Teil hinzufügen** to add up to 12 panels, or **−** beside a panel to remove it. The text is saved with the project and included in JSON exports.
+
+The flower construction lays out its petals dynamically. Its center is a polygon whose number of corners follows the petal count by default; changing **Ecken des Mittelteils** lets you override that number (3–12).
