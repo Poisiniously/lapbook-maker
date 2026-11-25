@@ -53,6 +53,12 @@
     "wheel", "flower", "pocket4", "fan1", "fan2", "leporello", "foldcross",
     "foldsheet", "hexfold", "leporello-figure", "flipflap", "foldheart"
   ]);
+  const multiPartCounts = {
+    accordion: 2, booklet: 2, pocket: 1, wheel: 4, flower: 5, pocket4: 4,
+    fan1: 4, fan2: 4, leporello: 4, foldcross: 4, foldsheet: 3,
+    hexfold: 2, "leporello-figure": 4, flipflap: 4, foldheart: 4
+  };
+  const minPartCounts = { flower: 3, wheel: 2, pocket4: 2, fan1: 2, fan2: 2, leporello: 2, foldcross: 2, foldsheet: 2, "leporello-figure": 2, flipflap: 2, foldheart: 2 };
 
   let project = loadProject();
   let zoom = 1;
@@ -93,10 +99,14 @@
           rotation: clamp(Number(item.rotation) || 0, -360, 360),
           text: String(item.text == null ? base.text : item.text).slice(0, 500),
           secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
+          parts: Array.isArray(item.parts) ? item.parts.map(function (part) { return String(part).slice(0, 500); }).slice(0, 12) : null,
+          centerSides: clamp(Number(item.centerSides) || 5, 3, 12),
           bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
           color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
           open: Boolean(item.open),
-          openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 8; }) : []
+          openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 12; }) : [],
+          parts: Array.isArray(item.parts) ? item.parts.map(function (part) { return String(part).slice(0, 500); }).slice(0, 12) : null,
+          centerSides: clamp(Number(item.centerSides) || 5, 3, 12)
         };
       });
       return {
@@ -179,10 +189,47 @@
     return button;
   }
 
-  function getPanelTexts(item, count) {
-    const values = String(item.secondary || "").split("|").map(function (value) { return value.trim(); });
+  function getPanelTexts(item, fallbackCount) {
+    const legacy = String(item.secondary || "").split("|").map(function (value) { return value.trim(); });
+    const values = Array.isArray(item.parts) ? item.parts.slice() : legacy;
+    const count = Math.max(1, Math.min(12, values.length || fallbackCount));
     while (values.length < count) values.push("Feld " + (values.length + 1));
     return values.slice(0, count);
+  }
+
+  function getDefaultParts(item) {
+    const count = multiPartCounts[item.type] || 0;
+    const legacy = String(item.secondary || "").split("|").map(function (value) { return value.trim(); });
+    while (legacy.length < count) legacy.push("Feld " + (legacy.length + 1));
+    return legacy.slice(0, count);
+  }
+
+  function syncParts(item) {
+    if (!Array.isArray(item.parts)) item.parts = getDefaultParts(item);
+    item.parts = item.parts.slice(0, 12).map(function (part) { return String(part).slice(0, 500); });
+    item.secondary = item.parts.join("|");
+  }
+
+  function polygonClipPath(sides) {
+    const points = [];
+    for (let index = 0; index < sides; index += 1) {
+      const angle = (-90 + index * 360 / sides) * Math.PI / 180;
+      const x = 50 + 49 * Math.cos(angle);
+      const y = 50 + 49 * Math.sin(angle);
+      points.push(x.toFixed(2) + "% " + y.toFixed(2) + "%");
+    }
+    return "polygon(" + points.join(",") + ")";
+  }
+
+  function renderPartFields(item) {
+    const parts = getPanelTexts(item, multiPartCounts[item.type] || 2);
+    let html = '<div class="parts-editor"><div class="parts-editor-heading"><strong>Einzelne Elemente</strong><span>' + parts.length + ' Teile</span></div>';
+    parts.forEach(function (part, index) {
+      html += '<div class="part-field-row"><label class="field"><span class="field-label">Teil ' + (index + 1) + '</span><textarea data-part-index="' + index + '" maxlength="500">' + escapeHtml(part) + '</textarea></label>';
+      html += '<button type="button" class="part-remove" data-part-remove="' + index + '" aria-label="Teil ' + (index + 1) + ' entfernen" title="Teil entfernen"' + (parts.length <= (minPartCounts[item.type] || 1) ? ' disabled' : '') + '>−</button></div>';
+    });
+    html += '<button type="button" class="part-add" data-part-add' + (parts.length >= 12 ? ' disabled' : '') + '>＋ Teil hinzufügen</button></div>';
+    return html;
   }
 
   function addConstructionGuide(parent, className) {
@@ -210,11 +257,9 @@
   function renderCatalogElement(item, node) {
     const layout = document.createElement("div");
     layout.className = "catalog-layout " + item.type + "-layout" + (item.open ? " is-open" : "");
-    const count = item.type === "flower" ? 5
-      : item.type === "wheel" ? 4
-      : item.type === "foldsheet" ? 3
-      : (["foldcross", "fan1", "fan2", "leporello-figure", "flipflap", "foldheart", "pocket4"].includes(item.type) ? 4 : 2);
-    const labels = getPanelTexts(item, count);
+    const fallbackCount = multiPartCounts[item.type] || 2;
+    const labels = getPanelTexts(item, fallbackCount);
+    const count = labels.length;
     const center = document.createElement("div");
     center.className = "template-center";
     center.textContent = item.text;
@@ -241,9 +286,22 @@
       addConstructionGuide(layout, "guide-cut guide-circle");
     } else if (item.type === "flower") {
       labels.forEach(function (label, index) {
-        layout.append(makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label));
+        const petal = makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label);
+        const angle = -90 + index * 360 / count;
+        const radians = angle * Math.PI / 180;
+        petal.style.left = (50 + 31 * Math.cos(radians) - 17) + "%";
+        petal.style.top = (50 + 31 * Math.sin(radians) - 18) + "%";
+        petal.style.transform = "rotate(" + (angle + 90) + "deg)";
+        layout.append(petal);
       });
       center.classList.add("flower-center");
+      center.style.left = "29%";
+      center.style.top = "29%";
+      center.style.width = "42%";
+      center.style.height = "42%";
+      center.style.backgroundColor = item.bg;
+      center.style.borderColor = item.color;
+      center.style.clipPath = polygonClipPath(clamp(Number(item.centerSides) || count, 3, 12));
       layout.append(center);
       addConstructionGuide(layout, "guide-fold flower-fold flower-fold-a");
       addConstructionGuide(layout, "guide-fold flower-fold flower-fold-b");
@@ -497,12 +555,15 @@
     }
 
     let html = '<section class="inspector-group"><div class="group-heading"><h3>Inhalt</h3><span class="element-kind">' + typeName(item.type) + '</span></div>';
-    html += fieldMarkup("Vorderseite / Text", "element-text", item.text, { kind: "textarea", maxLength: 500 });
-    if (["flap", "accordion", "booklet", "pocket"].includes(item.type) || catalogTypes.has(item.type)) {
-      html += fieldMarkup("Weitere Felder (mit | trennen)", "element-secondary", item.secondary, { kind: "textarea", maxLength: 500 });
+    if (item.type === "flower") {
+      html += fieldMarkup("Text in der Mitte", "element-text", item.text, { kind: "textarea", maxLength: 500 });
+      html += '<label class="field"><span class="field-label">Ecken des Mittelteils</span><input id="flower-center-sides" type="number" min="3" max="12" step="1" value="' + clamp(Number(item.centerSides) || 5, 3, 12) + '"></label>';
+    } else {
+      html += fieldMarkup("Vorderseite / Text", "element-text", item.text, { kind: "textarea", maxLength: 500 });
     }
-    if (catalogTypes.has(item.type)) {
-      html += '<p class="field-help">Bei mehrteiligen Vorlagen trennst du die einzelnen Texte mit einem senkrechten Strich ( | ). Die Teile lassen sich direkt auf der Arbeitsfläche aufklappen.</p>';
+    if (multiPartCounts[item.type] || ["flap", "accordion", "booklet", "pocket"].includes(item.type)) {
+      syncParts(item);
+      html += renderPartFields(item);
     }
     html += '</section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Farben</h3></div><div class="color-controls"><label class="color-control">Papierfarbe<input id="element-bg" type="color" value="' + escapeHtml(item.bg) + '"></label><label class="color-control">Schriftfarbe<input id="element-color" type="color" value="' + escapeHtml(item.color) + '"></label></div></section>';
@@ -514,6 +575,25 @@
     inspector.innerHTML = html;
     bindInspector(item);
   }
+
+  inspector.addEventListener("click", function (event) {
+    const add = event.target.closest("[data-part-add]");
+    const remove = event.target.closest("[data-part-remove]");
+    const item = getSelected();
+    if (!item || (!add && !remove)) return;
+    syncParts(item);
+    if (add && item.parts.length < 12) {
+      item.parts.push("Neues Teil " + (item.parts.length + 1));
+    } else if (remove && item.parts.length > (minPartCounts[item.type] || 1)) {
+      item.parts.splice(Number(remove.dataset.partRemove), 1);
+    } else {
+      return;
+    }
+    item.secondary = item.parts.join("|");
+    renderStage();
+    renderInspector();
+    persist();
+  });
 
   function updateItem(property, value) {
     const item = getSelected();
@@ -529,9 +609,23 @@
 
   function bindInspector(item) {
     const textInput = document.getElementById("element-text");
-    const secondaryInput = document.getElementById("element-secondary");
     if (textInput) textInput.addEventListener("input", function () { updateItem("text", textInput.value); });
-    if (secondaryInput) secondaryInput.addEventListener("input", function () { updateItem("secondary", secondaryInput.value); });
+    const centerSides = document.getElementById("flower-center-sides");
+    if (centerSides) centerSides.addEventListener("input", function () {
+      item.centerSides = clamp(Number(centerSides.value) || 5, 3, 12);
+      renderStage();
+      persist();
+    });
+    inspector.querySelectorAll("[data-part-index]").forEach(function (input) {
+      input.addEventListener("input", function () {
+        const index = Number(input.dataset.partIndex);
+        syncParts(item);
+        item.parts[index] = input.value.slice(0, 500);
+        item.secondary = item.parts.join("|");
+        renderStage();
+        persist();
+      });
+    });
     const bg = document.getElementById("element-bg");
     const color = document.getElementById("element-color");
     const width = document.getElementById("element-width");
@@ -554,7 +648,9 @@
       y: clamp(100 + (count % 4) * 35, 0, 700 - template.h),
       rotation: 0,
       open: false,
-      openPanels: []
+      openPanels: [],
+      parts: (multiPartCounts[type] ? String(template.secondary || "").split("|").map(function (part) { return part.trim(); }) : []),
+      centerSides: 5
     });
     project.elements.push(item);
     project.selectedId = item.id;
@@ -786,7 +882,9 @@
           bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
           color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
           open: Boolean(item.open),
-          openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 8; }) : []
+          openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 12; }) : [],
+          parts: Array.isArray(item.parts) ? item.parts.map(function (part) { return String(part).slice(0, 500); }).slice(0, 12) : null,
+          centerSides: clamp(Number(item.centerSides) || 5, 3, 12)
         };
       })
     };
