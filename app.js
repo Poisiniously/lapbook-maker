@@ -1046,6 +1046,20 @@
     showToast("Neues Lapbook erstellt");
   });
 
+  document.getElementById("clear-all").addEventListener("click", function () {
+    if (project.elements.length === 0) {
+      showToast("Die Arbeitsfläche ist bereits leer");
+      return;
+    }
+    if (!window.confirm("Wirklich alle Elemente von der Arbeitsfläche löschen? Dieser Schritt kann nicht rückgängig gemacht werden.")) return;
+    project.elements = [];
+    project.selectedId = null;
+    renderStage();
+    renderInspector();
+    persist();
+    showToast("Alle Elemente gelöscht");
+  });
+
   document.getElementById("export-project").addEventListener("click", function () {
     const safeName = (project.title || "lapbook").trim().replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "lapbook";
     download(safeName + ".lapbook.json", JSON.stringify({ format: "lapbook-maker", version: 2, title: project.title, paper: project.paper, guides: project.guides !== false, elements: project.elements }, null, 2), "application/json");
