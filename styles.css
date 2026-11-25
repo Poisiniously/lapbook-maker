@@ -202,7 +202,7 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
   .editor-layout { display: block; min-height: 0; }
   .workspace { display: block; background: #fff; overflow: visible; }
   .canvas-viewport { display: block; padding: 0; overflow: visible; }
-  .canvas-scaler { width: 100%; max-width: none; }
+  .canvas-scaler { width: 100% !important; max-width: none; }
   .lapbook-stage { width: 100%; box-shadow: none; border: 1px solid #ddd; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .element.selected { outline: none; }
   .element.selected::after { display: none; }
@@ -618,4 +618,16 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
   }
   .flipflap-panel { transform: translateX(105%) rotateY(-22deg) !important; }
   .tool-grid-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+
+/* Print and live editing stay in sync */
+@media print {
+  .canvas-scaler {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .element {
+    break-inside: avoid;
+  }
 }
