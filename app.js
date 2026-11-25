@@ -732,7 +732,7 @@
 
   document.getElementById("export-project").addEventListener("click", function () {
     const safeName = (project.title || "lapbook").trim().replace(/[^a-z0-9-_]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "lapbook";
-    download(safeName + ".lapbook.json", JSON.stringify({ format: "lapbook-maker", version: 1, title: project.title, paper: project.paper, elements: project.elements }, null, 2), "application/json");
+    download(safeName + ".lapbook.json", JSON.stringify({ format: "lapbook-maker", version: 2, title: project.title, paper: project.paper, guides: project.guides !== false, elements: project.elements }, null, 2), "application/json");
     showToast("Lapbook exportiert");
   });
 
@@ -746,7 +746,7 @@
       try {
         const parsed = JSON.parse(String(reader.result));
         if (!parsed || !Array.isArray(parsed.elements)) throw new Error("Ungültige Lapbook-Datei");
-        const next = { title: String(parsed.title || "Importiertes Lapbook").slice(0, 60), paper: parsed.paper, elements: parsed.elements, selectedId: null };
+        const next = { title: String(parsed.title || "Importiertes Lapbook").slice(0, 60), paper: parsed.paper, guides: parsed.guides !== false, elements: parsed.elements, selectedId: null };
         const valid = next.elements.every(function (item) { return item && templates[item.type] && typeof item.id === "string"; });
         if (!valid) throw new Error("Die Datei enthält unbekannte Elemente.");
         project = loadFromImport(next);
@@ -768,6 +768,7 @@
     const safe = {
       title: String(parsed.title || "Importiertes Lapbook").slice(0, 60),
       paper: /^#[0-9a-f]{6}$/i.test(parsed.paper) ? parsed.paper : defaults.paper,
+      guides: parsed.guides !== false,
       selectedId: null,
       elements: parsed.elements.map(function (item) {
         const base = templates[item.type];
@@ -782,7 +783,8 @@
           secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
           bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
           color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
-          open: Boolean(item.open)
+          open: Boolean(item.open),
+          openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 8; }) : []
         };
       })
     };
