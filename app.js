@@ -133,7 +133,7 @@
 
       const usedIds = new Set();
       const elements = parsed.elements
-        .filter(function (item) { return item && templates[item.type] && typeof item.id === "string" && item.id; })
+        .filter(function (item) { return item && Object.hasOwn(templates, item.type) && typeof item.id === "string" && item.id; })
         .map(function (item) {
           const normalized = normalizeElement(item, false);
           if (usedIds.has(normalized.id)) normalized.id = uid();
@@ -941,7 +941,7 @@
       offsetX: event.clientX - rect.left - (item.x / 1000) * rect.width,
       offsetY: event.clientY - rect.top - (item.y / 700) * rect.height
     };
-    stage.setPointerCapture(event.pointerId);
+    itemNode.setPointerCapture(event.pointerId);
     event.preventDefault();
   });
 
@@ -1078,7 +1078,7 @@
         if (!parsed || !Array.isArray(parsed.elements)) throw new Error("Ungültige Lapbook-Datei");
         if (parsed.elements.length > 500) throw new Error("Die Datei enthält mehr als 500 Elemente.");
         const next = { title: String(parsed.title || "Importiertes Lapbook").slice(0, 60), paper: parsed.paper, guides: parsed.guides !== false, elements: parsed.elements, selectedId: null };
-        const valid = next.elements.every(function (item) { return item && typeof item === "object" && templates[item.type]; });
+        const valid = next.elements.every(function (item) { return item && typeof item === "object" && Object.hasOwn(templates, item.type); });
         if (!valid) throw new Error("Die Datei enthält unbekannte Elemente.");
 
         const hasCurrentProject = project.elements.length > 0 || project.title !== defaults.title || project.paper !== defaults.paper || project.guides !== defaults.guides;
