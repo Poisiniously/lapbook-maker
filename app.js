@@ -193,7 +193,7 @@
 
   function getPanelTexts(item, fallbackCount) {
     const legacy = String(item.secondary || "").split("|").map(function (value) { return value.trim(); });
-    const values = Array.isArray(item.parts) ? item.parts.slice() : legacy;
+    const values = Array.isArray(item.parts) && item.parts.length ? item.parts.slice() : legacy;
     const count = Math.max(1, Math.min(12, values.length || fallbackCount));
     while (values.length < count) values.push("Feld " + (values.length + 1));
     return values.slice(0, count);
@@ -207,7 +207,7 @@
   }
 
   function syncParts(item) {
-    if (!Array.isArray(item.parts)) item.parts = getDefaultParts(item);
+    if (!Array.isArray(item.parts) || !item.parts.length) item.parts = getDefaultParts(item);
     item.parts = item.parts.slice(0, 12).map(function (part) { return String(part).slice(0, 500); });
     item.secondary = item.parts.join("|");
   }
@@ -322,10 +322,10 @@
       addConstructionGuide(layout, "guide-fold pocket4-fold");
       addConstructionGuide(layout, "guide-glue pocket4-glue");
     } else if (item.type === "fan1") {
-      const angles = [-22, -8, 7, 22];
       labels.forEach(function (label, index) {
         const blade = makeTemplatePanel(item, index, "fan1-blade fan1-blade-" + index, label);
-        const angle = angles[index] + ((item.openPanels || []).includes(index) ? (index < 2 ? -9 : 9) : 0);
+        const baseAngle = count === 1 ? 0 : -25 + index * 50 / (count - 1);
+        const angle = baseAngle + ((item.openPanels || []).includes(index) ? (index < count / 2 ? -7 : 7) : 0);
         blade.style.transform = "rotate(" + angle + "deg)";
         blade.style.zIndex = String(index + 2);
         layout.append(blade);
@@ -342,7 +342,8 @@
       layout.append(glue);
       labels.forEach(function (label, index) {
         const strip = makeTemplatePanel(item, index, "fan2-strip fan2-strip-" + index, label);
-        strip.style.top = (index * 19) + "%";
+        strip.style.top = (index * (78 / count)) + "%";
+        strip.style.height = Math.min(23, 88 / count) + "%";
         strip.style.zIndex = String(index + 1);
         if ((item.openPanels || []).includes(index)) strip.classList.add("is-expanded");
         layout.append(strip);
@@ -379,6 +380,8 @@
         const panel = document.createElement("div");
         panel.className = "foldsheet-panel foldsheet-panel-" + index;
         panel.textContent = label;
+        panel.style.top = (index * (100 / count)) + "%";
+        panel.style.height = (100 / count) + "%";
         panel.style.backgroundColor = index % 2 ? "#f4eafa" : item.bg;
         panel.style.color = item.color;
         layout.append(panel);
@@ -412,6 +415,7 @@
         const panel = document.createElement("div");
         panel.className = "figure-panel";
         panel.textContent = label;
+        panel.style.height = (100 / count) + "%";
         panel.style.backgroundColor = index % 2 ? "#f2eafa" : item.bg;
         panel.style.color = item.color;
         body.append(panel);
@@ -428,7 +432,10 @@
       backing.className = "flipflap-backing";
       backing.textContent = item.text;
       labels.forEach(function (label, index) {
-        layout.append(makeTemplatePanel(item, index, "flipflap-panel flipflap-panel-" + index, label));
+        const panel = makeTemplatePanel(item, index, "flipflap-panel flipflap-panel-" + index, label);
+        panel.style.top = (index * (100 / count)) + "%";
+        panel.style.height = (100 / count) + "%";
+        layout.append(panel);
       });
       layout.append(backing);
       addConstructionGuide(layout, "guide-fold flipflap-crease");
@@ -436,7 +443,13 @@
       addConstructionGuide(layout, "guide-glue flipflap-glue");
     } else if (item.type === "foldheart") {
       labels.forEach(function (label, index) {
-        layout.append(makeTemplatePanel(item, index, "heart-petal heart-petal-" + index, label));
+        const petal = makeTemplatePanel(item, index, "heart-petal heart-petal-" + index, label);
+        const angle = -90 + index * 360 / count;
+        const radians = angle * Math.PI / 180;
+        petal.style.left = (50 + 31 * Math.cos(radians) - 23.5) + "%";
+        petal.style.top = (50 + 31 * Math.sin(radians) - 24) + "%";
+        petal.style.transform = "rotate(" + (angle + 90) + "deg)";
+        layout.append(petal);
       });
       center.classList.add("heart-center");
       layout.append(center);
