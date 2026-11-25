@@ -215,7 +215,9 @@
       face.className = "wheel-face";
       face.style.transform = "rotate(" + item.rotation + "deg)";
       face.style.background = "conic-gradient(" + item.bg + " 0 25%, #f7e5ed 25% 50%, #e5f0e7 50% 75%, #fff0ce 75%)";
-      face.append(makeLabel(item.text, "wheel-center"));
+      const center = makeLabel(item.text, "wheel-center");
+      center.style.color = item.color;
+      face.append(center);
       node.append(face, makeToggle(item, "Drehscheibe drehen"));
     } else {
       node.append(makeLabel(item.text));
