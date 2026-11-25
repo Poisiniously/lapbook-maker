@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f4ff">
+  <meta name="description" content="Gestalte digitale Lapbooks mit Klappen, Faltbüchern, Taschen, Drehscheiben und vielen Papierformen.">
+  <title>Lapbook Maker</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Lapbook Maker Startseite">
+      <span class="brand-mark">L</span>
+      <span>lapbook<span class="brand-light">maker</span></span>
+    </a>
+    <div class="project-name">
+      <label class="sr-only" for="project-title">Name des Lapbooks</label>
+      <input id="project-title" type="text" value="Mein Lapbook" maxlength="60" spellcheck="false">
+      <span class="save-state" id="save-state"><span class="save-dot"></span> Lokal gespeichert</span>
+    </div>
+    <div class="top-actions">
+      <button class="button button-quiet" id="new-project" type="button" title="Neues Lapbook">Neu</button>
+      <button class="button button-quiet" id="import-project" type="button" title="Lapbook importieren">Importieren</button>
+      <button class="button button-quiet" id="export-project" type="button" title="Lapbook als Datei exportieren">Exportieren</button>
+      <button class="button button-primary" id="print-project" type="button"><span aria-hidden="true">↗</span> Drucken / PDF</button>
+      <input id="import-file" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <main class="editor-layout">
+    <aside class="panel tools-panel" aria-label="Elemente hinzufügen">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">BAUKASTEN</p>
+          <h1>Elemente</h1>
+        </div>
+        <span class="count-pill" id="element-count">0</span>
+      </div>
+      <p class="panel-hint">Klicke auf ein Element, um es auf dein Lapbook zu setzen.</p>
+
+      <section class="tool-section">
+        <h2>Falt-Elemente</h2>
+        <div class="tool-grid">
+          <button class="tool-card" type="button" data-add="flap"><span class="tool-art art-flap"><i></i></span><span>Klappe</span></button>
+          <button class="tool-card" type="button" data-add="accordion"><span class="tool-art art-accordion"><i></i><i></i><i></i></span><span>Akkordeon</span></button>
+          <button class="tool-card" type="button" data-add="booklet"><span class="tool-art art-booklet"><i></i></span><span>Mini-Buch</span></button>
+          <button class="tool-card" type="button" data-add="pocket"><span class="tool-art art-pocket"><i></i></span><span>Tasche</span></button>
+          <button class="tool-card" type="button" data-add="wheel"><span class="tool-art art-wheel">✳</span><span>Drehscheibe</span></button>
+          <button class="tool-card" type="button" data-add="tab"><span class="tool-art art-tab">TAB</span><span>Reiter</span></button>
+        </div>
+      </section>
+
+      <section class="tool-section">
+        <h2>Formen &amp; Karten</h2>
+        <div class="tool-grid">
+          <button class="tool-card" type="button" data-add="note"><span class="tool-art art-note">Aa</span><span>Notizkarte</span></button>
+          <button class="tool-card" type="button" data-add="circle"><span class="tool-art art-circle"></span><span>Kreis</span></button>
+          <button class="tool-card" type="button" data-add="triangle"><span class="tool-art art-triangle"></span><span>Dreieck</span></button>
+          <button class="tool-card" type="button" data-add="star"><span class="tool-art art-star">★</span><span>Stern</span></button>
+          <button class="tool-card" type="button" data-add="hexagon"><span class="tool-art art-hexagon"></span><span>Sechseck</span></button>
+          <button class="tool-card" type="button" data-add="banner"><span class="tool-art art-banner">Titel</span><span>Banner</span></button>
+        </div>
+      </section>
+
+      <div class="tip-card">
+        <span class="tip-icon">✦</span>
+        <div><strong>Kleiner Tipp</strong><p>Element anklicken, verschieben und rechts die Texte und Farben anpassen.</p></div>
+      </div>
+    </aside>
+
+    <section class="workspace" aria-label="Lapbook-Arbeitsfläche">
+      <div class="workspace-toolbar">
+        <div class="canvas-label"><span class="online-dot"></span><strong>Arbeitsfläche</strong><span class="separator">/</span><span id="selection-label">Nichts ausgewählt</span></div>
+        <div class="canvas-actions">
+          <button class="icon-button" id="zoom-out" type="button" aria-label="Verkleinern" title="Verkleinern">−</button>
+          <span id="zoom-label">100%</span>
+          <button class="icon-button" id="zoom-in" type="button" aria-label="Vergrößern" title="Vergrößern">+</button>
+          <button class="icon-button" id="zoom-fit" type="button" aria-label="Ansicht einpassen" title="Ansicht einpassen">⤢</button>
+        </div>
+      </div>
+      <div class="canvas-viewport" id="canvas-viewport">
+        <div class="canvas-scaler" id="canvas-scaler">
+          <div class="lapbook-stage" id="lapbook-stage" aria-label="Dein Lapbook. Elemente können mit der Maus verschoben werden.">
+            <div class="stage-panel panel-left"></div>
+            <div class="stage-panel panel-center"></div>
+            <div class="stage-panel panel-right"></div>
+            <div class="fold-line fold-line-one"></div>
+            <div class="fold-line fold-line-two"></div>
+            <div class="stage-empty" id="stage-empty">
+              <span class="empty-spark">✳</span>
+              <strong>Dein Lapbook beginnt hier</strong>
+              <span>Wähle links ein Element aus und gestalte deine eigene Lernwelt.</span>
+            </div>
+            <div class="stage-elements" id="stage-elements"></div>
+          </div>
+        </div>
+      </div>
+      <div class="workspace-footer">
+        <span><kbd>Drag</kbd> Elemente bewegen</span>
+        <span><kbd>Entf</kbd> Ausgewähltes löschen</span>
+        <span><kbd>Strg</kbd> + <kbd>D</kbd> Duplizieren</span>
+      </div>
+    </section>
+
+    <aside class="panel inspector-panel" aria-label="Eigenschaften">
+      <div class="panel-heading">
+        <div><p class="eyebrow">FEINSCHLIFF</p><h2>Eigenschaften</h2></div>
+        <span class="inspector-symbol">☷</span>
+      </div>
+      <div id="inspector-content" class="inspector-content">
+        <div class="inspector-empty">
+          <div class="empty-selection-icon">＋</div>
+          <strong>Wähle ein Element aus</strong>
+          <p>Klicke auf ein Element auf der Arbeitsfläche, um Text, Größe, Farbe und Form anzupassen.</p>
+        </div>
+      </div>
+      <div class="paper-settings">
+        <p class="eyebrow">PAPIER</p>
+        <label for="paper-color">Hintergrundfarbe</label>
+        <div class="color-row"><input type="color" id="paper-color" value="#fffdf7"><span>Lapbook-Untergrund</span></div>
+      </div>
+    </aside>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
