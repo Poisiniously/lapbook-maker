@@ -99,14 +99,16 @@
     const centerSides = centerSidesAuto
       ? clamp(defaultSides, 3, MAX_PARTS)
       : clamp(Number.isFinite(requestedSides) && requestedSides ? requestedSides : defaultSides, 3, MAX_PARTS);
+    const width = clamp(Number(item.w) || base.w, 45, 600);
+    const height = clamp(Number(item.h) || base.h, 40, 500);
 
     return {
       id: regenerateId ? uid() : (typeof item.id === "string" && item.id ? item.id : uid()),
       type: item.type,
-      x: clamp(Number(item.x) || 0, 0, 1000),
-      y: clamp(Number(item.y) || 0, 0, 700),
-      w: clamp(Number(item.w) || base.w, 45, 600),
-      h: clamp(Number(item.h) || base.h, 40, 500),
+      x: clamp(Number(item.x) || 0, 0, 1000 - width),
+      y: clamp(Number(item.y) || 0, 0, 700 - height),
+      w: width,
+      h: height,
       rotation: clamp(Number(item.rotation) || 0, -360, 360),
       text: String(item.text == null ? base.text : item.text).slice(0, 500),
       secondary: secondary,
@@ -528,6 +530,8 @@
         panel.style.height = (100 / count) + "%";
         layout.append(panel);
       });
+      backing.style.backgroundColor = item.bg;
+      backing.style.color = item.color;
       layout.append(backing);
       addConstructionGuide(layout, "guide-fold flipflap-crease");
       addConstructionGuide(layout, "guide-cut flipflap-cut");
@@ -548,6 +552,8 @@
         layout.append(petal);
       });
       center.classList.add("heart-center");
+      center.style.backgroundColor = item.bg;
+      center.style.borderColor = item.color;
       layout.append(center);
       addConstructionGuide(layout, "guide-fold heart-fold heart-fold-a");
       addConstructionGuide(layout, "guide-fold heart-fold heart-fold-b");
@@ -886,12 +892,14 @@
     project.elements[index] = project.elements[target];
     project.elements[target] = temp;
     renderStage();
+    renderInspector();
     persist();
   }
 
   function applyZoom() {
     zoom = clamp(Number(zoom) || 1, 0.6, 1.5);
-    scaler.style.width = (Math.round(zoom * 100)) + "%";
+    scaler.style.maxWidth = "none";
+    scaler.style.width = "min(" + Math.round(900 * zoom) + "px, " + Math.round(zoom * 100) + "%)";
     zoomLabel.textContent = Math.round(zoom * 100) + "%";
   }
 
@@ -937,6 +945,10 @@
     const y = ((event.clientY - rect.top - drag.offsetY) / rect.height) * 700;
     item.x = Math.round(clamp(x, 0, 1000 - item.w));
     item.y = Math.round(clamp(y, 0, 700 - item.h));
+    const xInput = document.getElementById("element-x");
+    const yInput = document.getElementById("element-y");
+    if (xInput) xInput.value = String(item.x);
+    if (yInput) yInput.value = String(item.y);
     const node = stageElements.querySelector('[data-id="' + item.id + '"]');
     if (node) {
       node.style.left = (item.x / 10) + "%";
