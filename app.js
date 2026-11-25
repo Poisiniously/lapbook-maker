@@ -54,7 +54,7 @@
     "foldsheet", "hexfold", "leporello-figure", "flipflap", "foldheart"
   ]);
   const multiPartCounts = {
-    accordion: 2, booklet: 2, pocket: 1, wheel: 4, flower: 5, pocket4: 4,
+    flap: 1, accordion: 2, booklet: 2, pocket: 1, wheel: 4, flower: 5, pocket4: 4,
     fan1: 4, fan2: 4, leporello: 4, foldcross: 4, foldsheet: 3,
     hexfold: 2, "leporello-figure": 4, flipflap: 4, foldheart: 4
   };
@@ -100,13 +100,15 @@
           text: String(item.text == null ? base.text : item.text).slice(0, 500),
           secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
           parts: Array.isArray(item.parts) ? item.parts.map(function (part) { return String(part).slice(0, 500); }).slice(0, 12) : null,
-          centerSides: clamp(Number(item.centerSides) || 5, 3, 12),
+          centerSides: clamp(Number(item.centerSides) || (item.type === "flower" && Array.isArray(item.parts) ? item.parts.length : 5), 3, 12),
+          centerSidesAuto: item.centerSidesAuto !== false,
           bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
           color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
           open: Boolean(item.open),
           openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 12; }) : [],
           parts: Array.isArray(item.parts) ? item.parts.map(function (part) { return String(part).slice(0, 500); }).slice(0, 12) : null,
-          centerSides: clamp(Number(item.centerSides) || 5, 3, 12)
+          centerSides: clamp(Number(item.centerSides) || 5, 3, 12),
+          centerSidesAuto: item.centerSidesAuto !== false
         };
       });
       return {
@@ -584,8 +586,10 @@
     syncParts(item);
     if (add && item.parts.length < 12) {
       item.parts.push("Neues Teil " + (item.parts.length + 1));
+      if (item.type === "flower" && item.centerSidesAuto !== false) item.centerSides = item.parts.length;
     } else if (remove && item.parts.length > (minPartCounts[item.type] || 1)) {
       item.parts.splice(Number(remove.dataset.partRemove), 1);
+      if (item.type === "flower" && item.centerSidesAuto !== false) item.centerSides = item.parts.length;
     } else {
       return;
     }
@@ -613,6 +617,7 @@
     const centerSides = document.getElementById("flower-center-sides");
     if (centerSides) centerSides.addEventListener("input", function () {
       item.centerSides = clamp(Number(centerSides.value) || 5, 3, 12);
+      item.centerSidesAuto = false;
       renderStage();
       persist();
     });
@@ -650,7 +655,8 @@
       open: false,
       openPanels: [],
       parts: (multiPartCounts[type] ? String(template.secondary || "").split("|").map(function (part) { return part.trim(); }) : []),
-      centerSides: 5
+      centerSides: type === "flower" ? 5 : 5,
+      centerSidesAuto: true
     });
     project.elements.push(item);
     project.selectedId = item.id;
