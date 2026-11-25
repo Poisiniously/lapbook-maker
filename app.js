@@ -15,6 +15,8 @@
   const paperColor = document.getElementById("paper-color");
   const toast = document.getElementById("toast");
 
+  const MAX_PARTS = 12;
+
   const defaults = {
     title: "Mein Lapbook",
     paper: "#fffdf7",
@@ -79,43 +81,69 @@
     });
   }
 
+  function normalizeElement(item, regenerateId) {
+    const base = templates[item.type];
+    const secondary = String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500);
+    const legacyParts = secondary.split("|").map(function (value) { return value.trim(); }).slice(0, MAX_PARTS);
+    let parts = null;
+
+    if (multiPartCounts[item.type]) {
+      const sourceParts = Array.isArray(item.parts) ? item.parts : legacyParts;
+      parts = sourceParts.map(function (part) { return String(part).slice(0, 500); }).slice(0, MAX_PARTS);
+      if (!parts.length) parts = legacyParts.slice();
+    }
+
+    const centerSidesAuto = item.centerSidesAuto !== false;
+    const requestedSides = Number(item.centerSides);
+    const defaultSides = item.type === "flower" && parts && parts.length ? parts.length : 5;
+    const centerSides = centerSidesAuto
+      ? clamp(defaultSides, 3, MAX_PARTS)
+      : clamp(Number.isFinite(requestedSides) && requestedSides ? requestedSides : defaultSides, 3, MAX_PARTS);
+
+    return {
+      id: regenerateId ? uid() : (typeof item.id === "string" && item.id ? item.id : uid()),
+      type: item.type,
+      x: clamp(Number(item.x) || 0, 0, 1000),
+      y: clamp(Number(item.y) || 0, 0, 700),
+      w: clamp(Number(item.w) || base.w, 45, 600),
+      h: clamp(Number(item.h) || base.h, 40, 500),
+      rotation: clamp(Number(item.rotation) || 0, -360, 360),
+      text: String(item.text == null ? base.text : item.text).slice(0, 500),
+      secondary: secondary,
+      parts: parts,
+      centerSides: centerSides,
+      centerSidesAuto: centerSidesAuto,
+      bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
+      color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
+      open: Boolean(item.open),
+      openPanels: Array.isArray(item.openPanels)
+        ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < MAX_PARTS; })
+        : []
+    };
+  }
+
   function loadProject() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return structuredClone(defaults);
       const parsed = JSON.parse(stored);
       if (!parsed || !Array.isArray(parsed.elements)) return structuredClone(defaults);
-      parsed.elements = parsed.elements.filter(function (item) {
-        return item && templates[item.type] && typeof item.id === "string";
-      }).map(function (item) {
-        const base = templates[item.type];
-        return {
-          id: item.id,
-          type: item.type,
-          x: clamp(Number(item.x) || 0, 0, 1000),
-          y: clamp(Number(item.y) || 0, 0, 700),
-          w: clamp(Number(item.w) || base.w, 45, 600),
-          h: clamp(Number(item.h) || base.h, 40, 500),
-          rotation: clamp(Number(item.rotation) || 0, -360, 360),
-          text: String(item.text == null ? base.text : item.text).slice(0, 500),
-          secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
-          parts: Array.isArray(item.parts) ? item.parts.map(function (part) { return String(part).slice(0, 500); }).slice(0, 12) : null,
-          centerSides: clamp(Number(item.centerSides) || (item.type === "flower" && Array.isArray(item.parts) ? item.parts.length : 5), 3, 12),
-          centerSidesAuto: item.centerSidesAuto !== false,
-          bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
-          color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
-          open: Boolean(item.open),
-          openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 12; }) : [],
-          parts: Array.isArray(item.parts) ? item.parts.map(function (part) { return String(part).slice(0, 500); }).slice(0, 12) : null,
-          centerSides: clamp(Number(item.centerSides) || 5, 3, 12),
-          centerSidesAuto: item.centerSidesAuto !== false
-        };
-      });
+
+      const usedIds = new Set();
+      const elements = parsed.elements
+        .filter(function (item) { return item && templates[item.type] && typeof item.id === "string" && item.id; })
+        .map(function (item) {
+          const normalized = normalizeElement(item, false);
+          if (usedIds.has(normalized.id)) normalized.id = uid();
+          usedIds.add(normalized.id);
+          return normalized;
+        });
+
       return {
         title: String(parsed.title || defaults.title).slice(0, 60),
         paper: /^#[0-9a-f]{6}$/i.test(parsed.paper) ? parsed.paper : defaults.paper,
         guides: parsed.guides !== false,
-        elements: parsed.elements,
+        elements: elements,
         selectedId: null
       };
     } catch (error) {
@@ -166,7 +194,7 @@
       flap: "Klappe", accordion: "Akkordeon", booklet: "Mini-Buch", pocket: "Tasche",
       wheel: "Drehscheibe", tab: "Reiter", note: "Notizkarte", circle: "Kreis",
       triangle: "Dreieck", star: "Stern", hexagon: "Sechseck", banner: "Banner",
-      flower: "Blume", pocket4: "Tasche mit 4 Karten", fan1: "Fächer 1", fan2: "Fächer 2",
+      flower: "Blume", pocket4: "Kartentasche", fan1: "Fächer 1", fan2: "Fächer 2",
       leporello: "Leporello", foldcross: "Faltkreuz", foldsheet: "Faltblatt", hexfold: "Falt-Sechseck",
       "leporello-figure": "Leporello-Figur", flipflap: "Flip-Flap", foldheart: "Faltherz"
     };
@@ -224,7 +252,7 @@
   }
 
   function renderPartFields(item) {
-    const parts = getPanelTexts(item, multiPartCounts[item.type] || 2);
+    const parts = getPanelTexts(item, multiPartCounts[item.type] || 2).slice(0, MAX_PARTS);
     const partNames = {
       accordion: "Akkordeon-Teil", wheel: "Segment", flower: "Blütenblatt",
       pocket4: "Karte", fan1: "Fächerblatt", fan2: "Fächerteil",
@@ -233,13 +261,14 @@
       flipflap: "Klappe", foldheart: "Herzblatt"
     };
     const partName = partNames[item.type] || "Teil";
-    let html = '<div class="parts-editor"><div class="parts-editor-heading"><strong>Einzelne Elemente</strong><span>' + parts.length + ' Teile</span></div>';
+    let html = '<div class="parts-editor"><div class="parts-editor-heading"><strong>Einzelne Felder</strong><span>' + parts.length + ' / ' + MAX_PARTS + '</span></div>';
     parts.forEach(function (part, index) {
       const label = partName + " " + (index + 1);
-      html += '<div class="part-field-row"><label class="field"><span class="field-label">' + label + '</span><textarea data-part-index="' + index + '" maxlength="500">' + escapeHtml(part) + '</textarea></label>';
+      html += '<div class="part-field-row"><label class="field"><span class="field-label">' + label + '</span><textarea data-part-index="' + index + '" aria-label="' + label + '" maxlength="500" rows="2">' + escapeHtml(part) + '</textarea></label>';
       html += '<button type="button" class="part-remove" data-part-remove="' + index + '" aria-label="' + label + ' entfernen" title="Teil entfernen"' + (parts.length <= (minPartCounts[item.type] || 1) ? ' disabled' : '') + '>−</button></div>';
     });
-    html += '<button type="button" class="part-add" data-part-add' + (parts.length >= 12 ? ' disabled' : '') + '>＋ Element hinzufügen</button></div>';
+    html += '<button type="button" class="part-add" data-part-add' + (parts.length >= MAX_PARTS ? ' disabled' : '') + '>＋ Teil hinzufügen</button>';
+    html += '<p class="field-help">Jeder Teil hat ein eigenes Textfeld. Du kannst bis zu ' + MAX_PARTS + ' Teile verwenden.</p></div>';
     return html;
   }
 
@@ -278,30 +307,45 @@
 
     if (item.type === "wheel") {
       const disc = document.createElement("div");
+      const wheelColors = [item.bg, "#f5e7ef", "#e5f0e7", "#fff0ce", "#e5eafa", "#f4e5d8"];
+      const anglePerPart = 360 / count;
+      const gradientStops = labels.map(function (_label, index) {
+        const start = (index * anglePerPart).toFixed(2);
+        const end = ((index + 1) * anglePerPart).toFixed(2);
+        return wheelColors[index % wheelColors.length] + " " + start + "deg " + end + "deg";
+      });
       disc.className = "wheel-disc";
       disc.style.transform = "rotate(" + item.rotation + "deg)";
+      disc.style.background = "conic-gradient(" + gradientStops.join(", ") + ")";
       labels.forEach(function (label, index) {
+        const angle = (-90 + (index + 0.5) * anglePerPart) * Math.PI / 180;
         const sector = document.createElement("div");
-        sector.className = "wheel-sector wheel-sector-" + index;
+        sector.className = "wheel-sector-label";
         sector.textContent = label;
-        sector.style.backgroundColor = index % 2 ? "#f5e7ef" : item.bg;
+        sector.style.left = (50 + 29 * Math.cos(angle)) + "%";
+        sector.style.top = (50 + 29 * Math.sin(angle)) + "%";
         sector.style.color = item.color;
         disc.append(sector);
       });
       const hub = document.createElement("div");
       hub.className = "wheel-hub";
       hub.textContent = item.text;
+      hub.style.color = item.color;
       disc.append(hub);
       layout.append(disc, makeToggle(item, "Drehscheibe um 90 Grad drehen"));
       addConstructionGuide(layout, "guide-fold wheel-pivot");
       addConstructionGuide(layout, "guide-cut guide-circle");
     } else if (item.type === "flower") {
+      const petalWidth = clamp(34 - (count - 5) * 2, 20, 34);
+      const petalHeight = clamp(36 - (count - 5) * 1.7, 24, 36);
       labels.forEach(function (label, index) {
         const petal = makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label);
         const angle = -90 + index * 360 / count;
         const radians = angle * Math.PI / 180;
-        petal.style.left = (50 + 31 * Math.cos(radians) - 17) + "%";
-        petal.style.top = (50 + 31 * Math.sin(radians) - 18) + "%";
+        petal.style.width = petalWidth + "%";
+        petal.style.height = petalHeight + "%";
+        petal.style.left = (50 + 31 * Math.cos(radians) - petalWidth / 2) + "%";
+        petal.style.top = (50 + 31 * Math.sin(radians) - petalHeight / 2) + "%";
         petal.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(petal);
       });
@@ -380,14 +424,17 @@
       layout.append(makeToggle(item, "Leporello auf- oder zusammenfalten"));
       addConstructionGuide(layout, "guide-cut leporello-cut");
     } else if (item.type === "foldcross") {
+      const flapWidth = clamp(34 - (count - 4) * 2, 18, 34);
+      const flapHeight = clamp(28 - (count - 4) * 1.5, 16, 28);
       labels.forEach(function (label, index) {
         const flap = makeTemplatePanel(item, index, "cross-flap cross-flap-" + index, label);
         const angle = -90 + index * 360 / count;
         const radians = angle * Math.PI / 180;
-        flap.style.width = "34%";
-        flap.style.height = "28%";
-        flap.style.left = (50 + 37 * Math.cos(radians) - 17) + "%";
-        flap.style.top = (50 + 37 * Math.sin(radians) - 14) + "%";
+        flap.style.width = flapWidth + "%";
+        flap.style.height = flapHeight + "%";
+        flap.style.left = (50 + 37 * Math.cos(radians) - flapWidth / 2) + "%";
+        flap.style.top = (50 + 37 * Math.sin(radians) - flapHeight / 2) + "%";
+        flap.style.setProperty("--base-rotation", (angle + 90) + "deg");
         flap.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(flap);
       });
@@ -482,12 +529,16 @@
       addConstructionGuide(layout, "guide-cut flipflap-cut");
       addConstructionGuide(layout, "guide-glue flipflap-glue");
     } else if (item.type === "foldheart") {
+      const heartWidth = clamp(47 - (count - 4) * 2.8, 24, 47);
+      const heartHeight = clamp(48 - (count - 4) * 2.7, 25, 48);
       labels.forEach(function (label, index) {
         const petal = makeTemplatePanel(item, index, "heart-petal heart-petal-" + index, label);
         const angle = -90 + index * 360 / count;
         const radians = angle * Math.PI / 180;
-        petal.style.left = (50 + 31 * Math.cos(radians) - 23.5) + "%";
-        petal.style.top = (50 + 31 * Math.sin(radians) - 24) + "%";
+        petal.style.width = heartWidth + "%";
+        petal.style.height = heartHeight + "%";
+        petal.style.left = (50 + 31 * Math.cos(radians) - heartWidth / 2) + "%";
+        petal.style.top = (50 + 31 * Math.sin(radians) - heartHeight / 2) + "%";
         petal.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(petal);
       });
@@ -496,6 +547,15 @@
       addConstructionGuide(layout, "guide-fold heart-fold heart-fold-a");
       addConstructionGuide(layout, "guide-fold heart-fold heart-fold-b");
     }
+
+    if (["fan1", "fan2", "leporello", "foldsheet"].includes(item.type)) {
+      const caption = document.createElement("div");
+      caption.className = "template-caption";
+      caption.textContent = item.text;
+      caption.setAttribute("aria-hidden", "true");
+      layout.append(caption);
+    }
+
     node.append(layout);
   }
 
@@ -599,7 +659,10 @@
     if (kind === "textarea") {
       return '<label class="field"><span class="field-label">' + label + '</span><textarea id="' + id + '" maxlength="' + maxLength + '">' + escapeHtml(value) + '</textarea></label>';
     }
-    return '<label class="field"><span class="field-label">' + label + '</span><input id="' + id + '" type="' + kind + '" value="' + escapeHtml(value) + '"' + (kind === "range" ? ' min="' + options.min + '" max="' + options.max + '" step="' + (options.step || 1) + '"' : '') + '></label>';
+    const bounds = ["range", "number"].includes(kind)
+      ? ' min="' + options.min + '" max="' + options.max + '" step="' + (options.step || 1) + '"'
+      : '';
+    return '<label class="field"><span class="field-label">' + label + '</span><input id="' + id + '" type="' + kind + '" value="' + escapeHtml(value) + '"' + bounds + '></label>';
   }
 
   function renderInspector() {
@@ -609,13 +672,32 @@
       return;
     }
 
+    const primaryLabels = {
+      accordion: "Erstes Feld", wheel: "Text in der Mitte", flower: "Text in der Mitte",
+      pocket4: "Beschriftung der Tasche", fan1: "Titel", fan2: "Titel",
+      leporello: "Titel", foldcross: "Text in der Mitte", foldsheet: "Titel",
+      hexfold: "Text auf der Oberseite", "leporello-figure": "Titel",
+      flipflap: "Text auf der Rückseite", foldheart: "Text in der Mitte"
+    };
+    const secondaryLabels = {
+      flap: "Text auf der Innenseite",
+      booklet: "Inhalt im Mini-Buch",
+      pocket: "Text auf der herausziehbaren Karte"
+    };
+
     let html = '<section class="inspector-group"><div class="group-heading"><h3>Inhalt</h3><span class="element-kind">' + typeName(item.type) + '</span></div>';
-    if (item.type === "flower") {
-      html += fieldMarkup("Text in der Mitte", "element-text", item.text, { kind: "textarea", maxLength: 500 });
-      html += '<label class="field"><span class="field-label">Ecken des Mittelteils</span><input id="flower-center-sides" type="number" min="3" max="12" step="1" value="' + clamp(Number(item.centerSides) || 5, 3, 12) + '"></label>';
-    } else {
-      html += fieldMarkup("Vorderseite / Text", "element-text", item.text, { kind: "textarea", maxLength: 500 });
+    html += fieldMarkup(primaryLabels[item.type] || "Text", "element-text", item.text, { kind: "textarea", maxLength: 500 });
+
+    if (secondaryLabels[item.type]) {
+      html += fieldMarkup(secondaryLabels[item.type], "element-secondary", item.secondary, { kind: "textarea", maxLength: 500 });
     }
+
+    if (item.type === "flower") {
+      html += '<label class="field flower-auto-field"><input id="flower-center-auto" type="checkbox"' + (item.centerSidesAuto !== false ? ' checked' : '') + '> <span>Seitenzahl an Blütenblätter koppeln</span></label>';
+      html += '<label class="field"><span class="field-label">Ecken des Mittelteils</span><input id="flower-center-sides" type="number" min="3" max="' + MAX_PARTS + '" step="1" value="' + clamp(Number(item.centerSides) || 5, 3, MAX_PARTS) + '"' + (item.centerSidesAuto !== false ? ' disabled' : '') + '></label>';
+      html += '<p class="field-help">Standardmäßig entspricht die Zahl der Ecken der Zahl der Blütenblätter.</p>';
+    }
+
     if (multiPartCounts[item.type]) {
       syncParts(item);
       html += renderPartFields(item);
@@ -624,6 +706,7 @@
     html += '<section class="inspector-group"><div class="group-heading"><h3>Farben</h3></div><div class="color-controls"><label class="color-control">Papierfarbe<input id="element-bg" type="color" value="' + escapeHtml(item.bg) + '"></label><label class="color-control">Schriftfarbe<input id="element-color" type="color" value="' + escapeHtml(item.color) + '"></label></div></section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Größe & Position</h3></div>';
     html += '<div class="inline-fields">' + fieldMarkup("Breite", "element-width", item.w, { kind: "range", min: 45, max: 600, step: 5 }) + fieldMarkup("Höhe", "element-height", item.h, { kind: "range", min: 40, max: 500, step: 5 }) + '</div>';
+    html += '<div class="inline-fields position-fields">' + fieldMarkup("X-Position", "element-x", item.x, { kind: "number", min: 0, max: 1000, step: 1 }) + fieldMarkup("Y-Position", "element-y", item.y, { kind: "number", min: 0, max: 700, step: 1 }) + '</div>';
     html += fieldMarkup("Drehung", "element-rotation", item.rotation, { kind: "range", min: -360, max: 360, step: 5 });
     html += '</section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Anordnen</h3></div><div class="layer-actions"><button type="button" class="small-action" data-inspector-action="duplicate">⧉ Duplizieren</button><button type="button" class="small-action" data-inspector-action="front">Nach vorne</button><button type="button" class="small-action" data-inspector-action="back">Nach hinten</button><button type="button" class="small-action delete-action" data-inspector-action="delete">Entfernen</button></div></section>';
@@ -637,10 +720,10 @@
     const item = getSelected();
     if (!item || (!add && !remove)) return;
     syncParts(item);
-    if (add && item.parts.length < 12) {
+    if (add && item.parts.length < MAX_PARTS) {
       item.parts.push("Neues Teil " + (item.parts.length + 1));
       if (item.type === "flower" && item.centerSidesAuto !== false) item.centerSides = item.parts.length;
-    } else if (remove && item.parts.length > (minPartCounts[item.type] || 1)) {
+    } else if (remove && Number.isInteger(Number(remove.dataset.partRemove)) && Number(remove.dataset.partRemove) >= 0 && Number(remove.dataset.partRemove) < item.parts.length && item.parts.length > (minPartCounts[item.type] || 1)) {
       item.parts.splice(Number(remove.dataset.partRemove), 1);
       if (item.type === "flower" && item.centerSidesAuto !== false) item.centerSides = item.parts.length;
     } else {
@@ -655,11 +738,31 @@
   function updateItem(property, value) {
     const item = getSelected();
     if (!item) return;
-    if (["w", "h", "rotation"].includes(property)) {
-      item[property] = Number(value);
+
+    if (["w", "h", "x", "y", "rotation"].includes(property)) {
+      const numericValue = Number(value);
+      if (!Number.isFinite(numericValue)) return;
+      if (property === "w") {
+        item.w = clamp(numericValue, 45, 600);
+        item.x = clamp(item.x, 0, 1000 - item.w);
+      } else if (property === "h") {
+        item.h = clamp(numericValue, 40, 500);
+        item.y = clamp(item.y, 0, 700 - item.h);
+      } else if (property === "x") {
+        item.x = clamp(numericValue, 0, 1000 - item.w);
+      } else if (property === "y") {
+        item.y = clamp(numericValue, 0, 700 - item.h);
+      } else {
+        item.rotation = clamp(numericValue, -360, 360);
+      }
+      const xInput = document.getElementById("element-x");
+      const yInput = document.getElementById("element-y");
+      if (xInput) xInput.value = String(item.x);
+      if (yInput) yInput.value = String(item.y);
     } else {
       item[property] = value;
     }
+
     renderStage();
     persist();
   }
@@ -667,9 +770,25 @@
   function bindInspector(item) {
     const textInput = document.getElementById("element-text");
     if (textInput) textInput.addEventListener("input", function () { updateItem("text", textInput.value); });
+
+    const secondaryInput = document.getElementById("element-secondary");
+    if (secondaryInput) secondaryInput.addEventListener("input", function () { updateItem("secondary", secondaryInput.value); });
+
+    const centerAuto = document.getElementById("flower-center-auto");
+    if (centerAuto) centerAuto.addEventListener("change", function () {
+      item.centerSidesAuto = centerAuto.checked;
+      if (item.centerSidesAuto) {
+        syncParts(item);
+        item.centerSides = clamp(item.parts.length, 3, MAX_PARTS);
+      }
+      renderStage();
+      renderInspector();
+      persist();
+    });
+
     const centerSides = document.getElementById("flower-center-sides");
     if (centerSides) centerSides.addEventListener("input", function () {
-      item.centerSides = clamp(Number(centerSides.value) || 5, 3, 12);
+      item.centerSides = clamp(Number(centerSides.value) || 5, 3, MAX_PARTS);
       item.centerSidesAuto = false;
       renderStage();
       persist();
@@ -688,11 +807,15 @@
     const color = document.getElementById("element-color");
     const width = document.getElementById("element-width");
     const height = document.getElementById("element-height");
+    const x = document.getElementById("element-x");
+    const y = document.getElementById("element-y");
     const rotation = document.getElementById("element-rotation");
     if (bg) bg.addEventListener("input", function () { updateItem("bg", bg.value); });
     if (color) color.addEventListener("input", function () { updateItem("color", color.value); });
     if (width) width.addEventListener("input", function () { updateItem("w", width.value); });
     if (height) height.addEventListener("input", function () { updateItem("h", height.value); });
+    if (x) x.addEventListener("change", function () { updateItem("x", x.value); });
+    if (y) y.addEventListener("change", function () { updateItem("y", y.value); });
     if (rotation) rotation.addEventListener("input", function () { updateItem("rotation", rotation.value); });
   }
 
@@ -707,8 +830,8 @@
       rotation: 0,
       open: false,
       openPanels: [],
-      parts: (multiPartCounts[type] ? String(template.secondary || "").split("|").map(function (part) { return part.trim(); }) : []),
-      centerSides: type === "flower" ? 5 : 5,
+      parts: (multiPartCounts[type] ? String(template.secondary || "").split("|").map(function (part) { return part.trim(); }).slice(0, MAX_PARTS) : []),
+      centerSides: type === "flower" ? String(template.secondary || "").split("|").length : 5,
       centerSidesAuto: true
     });
     project.elements.push(item);
@@ -722,7 +845,14 @@
   function duplicateSelected() {
     const item = getSelected();
     if (!item) return;
-    const copy = Object.assign({}, item, { id: uid(), x: clamp(item.x + 25, 0, 1000 - item.w), y: clamp(item.y + 25, 0, 700 - item.h), open: false });
+    const copy = Object.assign({}, item, {
+      id: uid(),
+      x: clamp(item.x + 25, 0, 1000 - item.w),
+      y: clamp(item.y + 25, 0, 700 - item.h),
+      open: false,
+      openPanels: Array.isArray(item.openPanels) ? item.openPanels.slice() : [],
+      parts: Array.isArray(item.parts) ? item.parts.slice() : item.parts
+    });
     const index = project.elements.indexOf(item);
     project.elements.splice(index + 1, 0, copy);
     project.selectedId = copy.id;
@@ -754,6 +884,7 @@
   }
 
   function applyZoom() {
+    zoom = clamp(Number(zoom) || 1, 0.6, 1.5);
     scaler.style.width = (Math.round(zoom * 100)) + "%";
     zoomLabel.textContent = Math.round(zoom * 100) + "%";
   }
@@ -767,7 +898,7 @@
     document.body.append(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
   document.querySelectorAll("[data-add]").forEach(function (button) {
@@ -878,7 +1009,8 @@
   });
 
   document.getElementById("new-project").addEventListener("click", function () {
-    if (project.elements.length && !window.confirm("Ein neues Lapbook starten? Dein aktuelles Projekt bleibt nur erhalten, wenn du es vorher exportierst.")) return;
+    const hasUnsavedWork = project.elements.length > 0 || project.title !== defaults.title || project.paper !== defaults.paper || project.guides !== defaults.guides;
+    if (hasUnsavedWork && !window.confirm("Ein neues Lapbook starten? Exportiere dein aktuelles Projekt vorher, wenn du es behalten möchtest.")) return;
     project = structuredClone(defaults);
     projectTitle.value = project.title;
     renderStage();
@@ -903,8 +1035,9 @@
       try {
         const parsed = JSON.parse(String(reader.result));
         if (!parsed || !Array.isArray(parsed.elements)) throw new Error("Ungültige Lapbook-Datei");
+        if (parsed.elements.length > 500) throw new Error("Die Datei enthält mehr als 500 Elemente.");
         const next = { title: String(parsed.title || "Importiertes Lapbook").slice(0, 60), paper: parsed.paper, guides: parsed.guides !== false, elements: parsed.elements, selectedId: null };
-        const valid = next.elements.every(function (item) { return item && templates[item.type] && typeof item.id === "string"; });
+        const valid = next.elements.every(function (item) { return item && typeof item === "object" && templates[item.type]; });
         if (!valid) throw new Error("Die Datei enthält unbekannte Elemente.");
         project = loadFromImport(next);
         projectTitle.value = project.title;
@@ -922,32 +1055,13 @@
   });
 
   function loadFromImport(parsed) {
-    const safe = {
+    return {
       title: String(parsed.title || "Importiertes Lapbook").slice(0, 60),
       paper: /^#[0-9a-f]{6}$/i.test(parsed.paper) ? parsed.paper : defaults.paper,
       guides: parsed.guides !== false,
       selectedId: null,
-      elements: parsed.elements.map(function (item) {
-        const base = templates[item.type];
-        return {
-          id: uid(), type: item.type,
-          x: clamp(Number(item.x) || 0, 0, 1000),
-          y: clamp(Number(item.y) || 0, 0, 700),
-          w: clamp(Number(item.w) || base.w, 45, 600),
-          h: clamp(Number(item.h) || base.h, 40, 500),
-          rotation: clamp(Number(item.rotation) || 0, -360, 360),
-          text: String(item.text == null ? base.text : item.text).slice(0, 500),
-          secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
-          bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
-          color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
-          open: Boolean(item.open),
-          openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 12; }) : [],
-          parts: Array.isArray(item.parts) ? item.parts.map(function (part) { return String(part).slice(0, 500); }).slice(0, 12) : null,
-          centerSides: clamp(Number(item.centerSides) || 5, 3, 12)
-        };
-      })
+      elements: parsed.elements.map(function (item) { return normalizeElement(item, true); })
     };
-    return safe;
   }
 
   document.getElementById("print-project").addEventListener("click", function () { window.print(); });
@@ -966,7 +1080,7 @@
       event.preventDefault();
       duplicateSelected();
     }
-    if (event.key === "Escape") {
+    if (!editing && event.key === "Escape") {
       project.selectedId = null;
       selectElement(null);
     }
