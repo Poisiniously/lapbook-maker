@@ -77,13 +77,13 @@ button { cursor: pointer; }
 .canvas-viewport { flex: 1; overflow: auto; padding: 32px clamp(18px, 4vw, 55px); display: flex; justify-content: center; align-items: flex-start; }
 .canvas-scaler { width: min(100%, 900px); flex: 0 0 auto; transition: width .12s ease; }
 .lapbook-stage { width: 100%; aspect-ratio: 10 / 7; position: relative; overflow: hidden; background: #fffdf7; border-radius: 3px; box-shadow: 0 14px 35px rgba(55,46,68,.16), 0 0 0 1px rgba(67,57,77,.06); isolation: isolate; }
-.stage-panel { position: absolute; top: 0; bottom: 0; width: 33.333%; pointer-events: none; }
+.stage-panel { position: absolute; top: 0; bottom: 0; width: 25%; pointer-events: none; }
 .panel-left { left: 0; background: linear-gradient(90deg, rgba(180,164,137,.035), transparent); }
-.panel-center { left: 33.333%; background: rgba(255,255,255,.1); }
+.panel-center { left: 25%; width: 50%; background: rgba(255,255,255,.1); }
 .panel-right { right: 0; background: linear-gradient(270deg, rgba(180,164,137,.035), transparent); }
 .fold-line { position: absolute; z-index: 0; top: 0; bottom: 0; border-left: 1px dashed rgba(162,148,128,.25); pointer-events: none; }
-.fold-line-one { left: 33.333%; }
-.fold-line-two { left: 66.666%; }
+.fold-line-one { left: 25%; }
+.fold-line-two { left: 75%; }
 .stage-empty { position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: #aaa2b5; text-align: center; pointer-events: none; padding: 18px; }
 .stage-empty strong { color: #837a91; font-size: clamp(12px, 1.6vw, 17px); }
 .stage-empty span:last-child { font-size: clamp(9px, 1.1vw, 12px); }
