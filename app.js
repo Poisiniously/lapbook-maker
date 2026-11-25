@@ -398,13 +398,15 @@
     node.style.zIndex = String(3 + project.elements.indexOf(item));
     node.style.color = item.color;
 
-    if (["flap", "booklet", "pocket", "accordion", "wheel"].includes(item.type)) {
+    if (catalogTypes.has(item.type) || ["flap", "booklet", "pocket", "accordion"].includes(item.type)) {
       node.style.background = "transparent";
     } else {
       node.style.backgroundColor = item.bg;
     }
 
-    if (item.type === "flap") {
+    if (catalogTypes.has(item.type)) {
+      renderCatalogElement(item, node);
+    } else if (item.type === "flap") {
       const body = document.createElement("div");
       body.className = "flap-body";
       const inside = makeLabel(item.secondary, "flap-inside");
@@ -452,7 +454,7 @@
     } else {
       node.append(makeLabel(item.text));
     }
-    if (item.type !== "wheel" && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet" && item.type !== "pocket") {
+    if (!catalogTypes.has(item.type) && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet" && item.type !== "pocket") {
       node.style.backgroundColor = item.bg;
     }
     if (project.selectedId === item.id) node.classList.add("selected");
@@ -467,6 +469,12 @@
     stageEmpty.hidden = project.elements.length > 0;
     elementCount.textContent = String(project.elements.length);
     stage.style.backgroundColor = project.paper;
+    stage.classList.toggle("guides-off", project.guides === false);
+    const guideButton = document.getElementById("toggle-guides");
+    if (guideButton) {
+      guideButton.textContent = project.guides === false ? "Linien: Aus" : "Linien: An";
+      guideButton.setAttribute("aria-pressed", String(project.guides !== false));
+    }
     paperColor.value = project.paper;
     selectionLabel.textContent = getSelected() ? typeName(getSelected().type) : "Nichts ausgewählt";
   }
@@ -490,8 +498,11 @@
 
     let html = '<section class="inspector-group"><div class="group-heading"><h3>Inhalt</h3><span class="element-kind">' + typeName(item.type) + '</span></div>';
     html += fieldMarkup("Vorderseite / Text", "element-text", item.text, { kind: "textarea", maxLength: 500 });
-    if (["flap", "accordion", "booklet", "pocket", "wheel"].includes(item.type)) {
-      html += fieldMarkup(item.type === "accordion" ? "Weitere Felder (mit | trennen)" : "Innenseite / Zusatztext", "element-secondary", item.secondary, { kind: "textarea", maxLength: 500 });
+    if (["flap", "accordion", "booklet", "pocket"].includes(item.type) || catalogTypes.has(item.type)) {
+      html += fieldMarkup("Weitere Felder (mit | trennen)", "element-secondary", item.secondary, { kind: "textarea", maxLength: 500 });
+    }
+    if (catalogTypes.has(item.type)) {
+      html += '<p class="field-help">Bei mehrteiligen Vorlagen trennst du die einzelnen Texte mit einem senkrechten Strich ( | ). Die Teile lassen sich direkt auf der Arbeitsfläche aufklappen.</p>';
     }
     html += '</section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Farben</h3></div><div class="color-controls"><label class="color-control">Papierfarbe<input id="element-bg" type="color" value="' + escapeHtml(item.bg) + '"></label><label class="color-control">Schriftfarbe<input id="element-color" type="color" value="' + escapeHtml(item.color) + '"></label></div></section>';
@@ -542,7 +553,8 @@
       x: clamp(120 + (count % 5) * 38, 0, 1000 - template.w),
       y: clamp(100 + (count % 4) * 35, 0, 700 - template.h),
       rotation: 0,
-      open: false
+      open: false,
+      openPanels: []
     });
     project.elements.push(item);
     project.selectedId = item.id;
@@ -609,7 +621,7 @@
 
   stage.addEventListener("pointerdown", function (event) {
     const itemNode = event.target.closest(".element");
-    if (!itemNode || event.target.closest(".fold-toggle")) return;
+    if (!itemNode || event.target.closest(".fold-toggle, [data-action='panel-toggle']")) return;
     const item = project.elements.find(function (entry) { return entry.id === itemNode.dataset.id; });
     if (!item) return;
     selectElement(item.id);
@@ -649,12 +661,26 @@
   stage.addEventListener("pointercancel", finishDrag);
 
   stage.addEventListener("click", function (event) {
+    const panelToggle = event.target.closest('[data-action="panel-toggle"]');
+    if (panelToggle) {
+      const panelNode = panelToggle.closest(".element");
+      const panelItem = project.elements.find(function (entry) { return entry.id === panelNode.dataset.id; });
+      if (!panelItem) return;
+      const panelIndex = Number(panelToggle.dataset.panelIndex);
+      const current = new Set(panelItem.openPanels || []);
+      if (current.has(panelIndex)) current.delete(panelIndex);
+      else current.add(panelIndex);
+      panelItem.openPanels = Array.from(current).sort(function (a, b) { return a - b; });
+      renderStage();
+      persist();
+      return;
+    }
     const toggle = event.target.closest('[data-action="toggle"]');
     if (toggle) {
       const node = toggle.closest(".element");
       const item = project.elements.find(function (entry) { return entry.id === node.dataset.id; });
       if (!item) return;
-      if (item.type === "wheel") item.rotation = (item.rotation + 45) % 360;
+      if (item.type === "wheel") item.rotation = (item.rotation + 90) % 360;
       else item.open = !item.open;
       renderStage();
       persist();
@@ -685,6 +711,12 @@
   paperColor.addEventListener("input", function () {
     project.paper = paperColor.value;
     stage.style.backgroundColor = project.paper;
+    persist();
+  });
+
+  document.getElementById("toggle-guides").addEventListener("click", function () {
+    project.guides = project.guides === false;
+    renderStage();
     persist();
   });
 
