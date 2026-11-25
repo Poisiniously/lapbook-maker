@@ -18,6 +18,7 @@
   const defaults = {
     title: "Mein Lapbook",
     paper: "#fffdf7",
+    guides: true,
     elements: [],
     selectedId: null
   };
@@ -34,8 +35,24 @@
     triangle: { type: "triangle", w: 145, h: 130, text: "Dreieck", secondary: "", bg: "#f5d9e5", color: "#87566f" },
     star: { type: "star", w: 140, h: 140, text: "Stern", secondary: "", bg: "#ffe7ae", color: "#8c6d35" },
     hexagon: { type: "hexagon", w: 160, h: 125, text: "Sechseck", secondary: "", bg: "#d5e9df", color: "#4f7560" },
-    banner: { type: "banner", w: 270, h: 75, text: "Mein Thema", secondary: "", bg: "#f3cddd", color: "#87536e" }
+    banner: { type: "banner", w: 270, h: 75, text: "Mein Thema", secondary: "", bg: "#f3cddd", color: "#87536e" },
+    flower: { type: "flower", w: 230, h: 220, text: "Blütenmitte", secondary: "Blatt 1|Blatt 2|Blatt 3|Blatt 4|Blatt 5", bg: "#f4d7e5", color: "#80516b" },
+    pocket4: { type: "pocket4", w: 245, h: 190, text: "Meine Tasche", secondary: "Karte 1|Karte 2|Karte 3|Karte 4", bg: "#e8def8", color: "#62517f" },
+    fan1: { type: "fan1", w: 250, h: 185, text: "Fächer", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e8def8", color: "#62517f" },
+    fan2: { type: "fan2", w: 250, h: 210, text: "Fächer 2", secondary: "Teil 1|Teil 2|Teil 3|Teil 4", bg: "#e8def8", color: "#62517f" },
+    leporello: { type: "leporello", w: 280, h: 150, text: "Leporello", secondary: "Seite 1|Seite 2|Seite 3|Seite 4", bg: "#e5dafa", color: "#5f4b87" },
+    foldcross: { type: "foldcross", w: 230, h: 230, text: "Mitte", secondary: "Oben|Rechts|Unten|Links", bg: "#e7dafa", color: "#63517e" },
+    foldsheet: { type: "foldsheet", w: 180, h: 255, text: "Faltblatt", secondary: "Feld 1|Feld 2|Feld 3", bg: "#e9defa", color: "#5f4b87" },
+    hexfold: { type: "hexfold", w: 190, h: 220, text: "Sechseck", secondary: "Innenseite", bg: "#d8e9df", color: "#4f7560" },
+    "leporello-figure": { type: "leporello-figure", w: 220, h: 285, text: "Meine Figur", secondary: "Kopf|Oberkörper|Mitte|Unterteil", bg: "#e8def8", color: "#62517f" },
+    flipflap: { type: "flipflap", w: 275, h: 215, text: "Flip-Flap", secondary: "Klappe 1|Klappe 2|Klappe 3|Klappe 4", bg: "#e7dafa", color: "#63517e" },
+    foldheart: { type: "foldheart", w: 235, h: 220, text: "Faltherz", secondary: "Herz 1|Herz 2|Herz 3|Herz 4", bg: "#f4d7e5", color: "#80516b" }
   };
+
+  const catalogTypes = new Set([
+    "wheel", "flower", "pocket4", "fan1", "fan2", "leporello", "foldcross",
+    "foldsheet", "hexfold", "leporello-figure", "flipflap", "foldheart"
+  ]);
 
   let project = loadProject();
   let zoom = 1;
@@ -78,12 +95,14 @@
           secondary: String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500),
           bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
           color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
-          open: Boolean(item.open)
+          open: Boolean(item.open),
+          openPanels: Array.isArray(item.openPanels) ? item.openPanels.filter(function (index) { return Number.isInteger(index) && index >= 0 && index < 8; }) : []
         };
       });
       return {
         title: String(parsed.title || defaults.title).slice(0, 60),
         paper: /^#[0-9a-f]{6}$/i.test(parsed.paper) ? parsed.paper : defaults.paper,
+        guides: parsed.guides !== false,
         elements: parsed.elements,
         selectedId: null
       };
@@ -98,6 +117,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         title: project.title,
         paper: project.paper,
+        guides: project.guides !== false,
         elements: project.elements
       }));
       saveState.innerHTML = '<span class="save-dot"></span> Lokal gespeichert';
@@ -133,7 +153,10 @@
     const names = {
       flap: "Klappe", accordion: "Akkordeon", booklet: "Mini-Buch", pocket: "Tasche",
       wheel: "Drehscheibe", tab: "Reiter", note: "Notizkarte", circle: "Kreis",
-      triangle: "Dreieck", star: "Stern", hexagon: "Sechseck", banner: "Banner"
+      triangle: "Dreieck", star: "Stern", hexagon: "Sechseck", banner: "Banner",
+      flower: "Blume", pocket4: "Tasche mit 4 Karten", fan1: "Fächer 1", fan2: "Fächer 2",
+      leporello: "Leporello", foldcross: "Faltkreuz", foldsheet: "Faltblatt", hexfold: "Falt-Sechseck",
+      "leporello-figure": "Leporello-Figur", flipflap: "Flip-Flap", foldheart: "Faltherz"
     };
     return names[type] || "Element";
   }
