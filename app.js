@@ -361,7 +361,12 @@
         panel.style.backgroundColor = index % 2 ? "#f3e8f3" : item.bg;
         panel.style.color = item.color;
         layout.append(panel);
-        if (index < 3) addConstructionGuide(layout, "guide-fold leporello-crease crease-" + index);
+        if (index < count - 1) {
+          const crease = document.createElement("span");
+          crease.className = "construction-guide guide-fold leporello-crease";
+          crease.style.left = ((index + 1) * 100 / count) + "%";
+          layout.append(crease);
+        }
       });
       layout.append(makeToggle(item, "Leporello auf- oder zusammenfalten"));
       addConstructionGuide(layout, "guide-cut leporello-cut");
@@ -395,16 +400,27 @@
         panel.style.backgroundColor = index % 2 ? "#f4eafa" : item.bg;
         panel.style.color = item.color;
         layout.append(panel);
-        if (index < 2) addConstructionGuide(layout, "guide-fold foldsheet-crease crease-" + index);
+        if (index < count - 1) {
+          const crease = document.createElement("span");
+          crease.className = "construction-guide guide-fold foldsheet-crease";
+          crease.style.top = ((index + 1) * 100 / count) + "%";
+          layout.append(crease);
+        }
       });
       layout.append(makeToggle(item, "Faltblatt auf- oder zusammenfalten"));
       addConstructionGuide(layout, "guide-cut foldsheet-cut");
     } else if (item.type === "hexfold") {
       const lower = document.createElement("div");
       lower.className = "hexfold-part hexfold-lower";
-      lower.textContent = labels[0];
       lower.style.backgroundColor = item.bg;
       lower.style.color = item.color;
+      labels.forEach(function (label, index) {
+        const part = document.createElement("span");
+        part.className = "hexfold-inner-panel";
+        part.textContent = label;
+        part.style.flex = "1 1 " + (100 / count) + "%";
+        lower.append(part);
+      });
       const upper = document.createElement("div");
       upper.className = "hexfold-part hexfold-upper";
       upper.textContent = item.text;
@@ -429,7 +445,12 @@
         panel.style.backgroundColor = index % 2 ? "#f2eafa" : item.bg;
         panel.style.color = item.color;
         body.append(panel);
-        if (index < 3) addConstructionGuide(body, "guide-fold figure-crease crease-" + index);
+        if (index < count - 1) {
+          const crease = document.createElement("span");
+          crease.className = "construction-guide guide-fold figure-crease";
+          crease.style.top = ((index + 1) * 100 / count) + "%";
+          body.append(crease);
+        }
       });
       const title = document.createElement("div");
       title.className = "figure-title";
