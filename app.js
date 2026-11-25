@@ -666,6 +666,7 @@
       const panelNode = panelToggle.closest(".element");
       const panelItem = project.elements.find(function (entry) { return entry.id === panelNode.dataset.id; });
       if (!panelItem) return;
+      selectElement(panelItem.id);
       const panelIndex = Number(panelToggle.dataset.panelIndex);
       const current = new Set(panelItem.openPanels || []);
       if (current.has(panelIndex)) current.delete(panelIndex);
@@ -680,6 +681,7 @@
       const node = toggle.closest(".element");
       const item = project.elements.find(function (entry) { return entry.id === node.dataset.id; });
       if (!item) return;
+      selectElement(item.id);
       if (item.type === "wheel") item.rotation = (item.rotation + 90) % 360;
       else item.open = !item.open;
       renderStage();
