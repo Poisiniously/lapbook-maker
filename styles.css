@@ -386,8 +386,7 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
   .construction-guide { display: block !important; }
   .leporello-layout .leporello-panel,
   .foldsheet-layout .foldsheet-panel { display: flex !important; }
-  .leporello-layout .leporello-panel { flex: 1 1 25% !important; }
-  .foldsheet-layout .foldsheet-panel { height: 33.333% !important; }
+  .leporello-layout .leporello-panel { flex: 1 1 0 !important; }
 }
 
 
@@ -473,3 +472,23 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
   border-radius: 58% 58% 48% 48%;
   transform-origin: center center;
 }
+
+
+.hexfold-lower {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.hexfold-inner-panel {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 3px;
+  border-right: 1px dashed rgba(80,70,90,.4);
+  font-size: .9em;
+  overflow-wrap: anywhere;
+}
+.hexfold-inner-panel:last-child { border-right: 0; }
