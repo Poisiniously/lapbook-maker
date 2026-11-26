@@ -45,7 +45,7 @@
     foldcross: { type: "foldcross", w: 230, h: 230, text: "Mitte", secondary: "Oben|Rechts|Unten|Links", bg: "#e7dafa", color: "#63517e" },
     foldsheet: { type: "foldsheet", w: 180, h: 255, text: "Faltblatt", secondary: "Feld 1|Feld 2|Feld 3", bg: "#e9defa", color: "#5f4b87" },
     hexfold: { type: "hexfold", w: 200, h: 350, text: "Sechseck", secondary: "Innenseite", bg: "#d8e9df", color: "#4f7560" },
-    flipflap: { type: "flipflap", w: 275, h: 215, text: "Flip-Flap", secondary: "Klappe 1|Klappe 2|Klappe 3|Klappe 4|Klappe 5", bg: "#e7dafa", color: "#63517e" },
+    flipflap: { type: "flipflap", w: 275, h: 215, text: "Flip-Flap", secondary: "Klappe 1\nText 1|Klappe 2\nText 2|Klappe 3\nText 3|Klappe 4\nText 4|Klappe 5\nText 5", bg: "#e7dafa", color: "#63517e" },
     foldheart: { type: "foldheart", w: 235, h: 220, text: "Faltherz", secondary: "Herz 1|Herz 2|Herz 3|Herz 4", bg: "#f4d7e5", color: "#80516b" }
   };
 
@@ -280,7 +280,9 @@
       html += '<button type="button" class="part-remove" data-part-remove="' + index + '" aria-label="' + label + ' entfernen" title="Teil entfernen"' + (parts.length <= (minPartCounts[item.type] || 1) ? ' disabled' : '') + '>−</button></div>';
     });
     html += '<button type="button" class="part-add" data-part-add' + (parts.length >= maxParts ? ' disabled' : '') + '>＋ Teil hinzufügen</button>';
-    html += '<p class="field-help">Jeder Teil hat ein eigenes Textfeld. Du kannst bis zu ' + maxParts + ' Teile verwenden.</p></div>';
+    html += '<p class="field-help">Jeder Teil hat ein eigenes Textfeld. Du kannst bis zu ' + maxParts + ' Teile verwenden.</p>';
+    if (item.type === "flipflap") html += '<p class="field-help">Erste Zeile = Vorderseite der Klappe. Weitere Zeilen = Text, der unter der Klappe steht.</p>';
+    html += '</div>';
     return html;
   }
 
@@ -328,6 +330,7 @@
       });
       disc.className = "wheel-disc";
       disc.style.transform = "rotate(" + item.rotation + "deg)";
+      disc.dataset.spin = String(item.rotation);
       disc.style.background = "conic-gradient(" + gradientStops.join(", ") + ")";
       labels.forEach(function (label, index) {
         const angle = (-90 + (index + 0.5) * anglePerPart) * Math.PI / 180;
@@ -561,9 +564,33 @@
       backing.className = "flipflap-backing";
       backing.textContent = item.text;
       labels.forEach(function (label, index) {
-        const panel = makeTemplatePanel(item, index, "flipflap-panel flipflap-panel-" + index, label);
-        panel.style.top = (index * (100 / count)) + "%";
-        panel.style.height = (100 / count) + "%";
+        // First line = front of the flap, further lines = text underneath the flap.
+        const lines = label.split("\n");
+        const top = (index * (100 / count)) + "%";
+        const height = (100 / count) + "%";
+        const under = document.createElement("div");
+        under.className = "flipflap-under";
+        under.textContent = lines.slice(1).join("\n");
+        under.style.top = top;
+        under.style.height = height;
+        under.style.color = item.color;
+        layout.append(under);
+        const panel = makeTemplatePanel(item, index, "flipflap-panel flipflap-panel-" + index, "");
+        const face = document.createElement("span");
+        face.className = "flip-face";
+        face.textContent = lines[0];
+        face.style.backgroundColor = item.bg;
+        face.style.color = item.color;
+        face.style.borderColor = item.color;
+        const back = document.createElement("span");
+        back.className = "flip-back";
+        back.style.backgroundColor = item.bg;
+        back.style.borderColor = item.color;
+        panel.replaceChildren(face, back);
+        panel.style.backgroundColor = "transparent";
+        panel.style.borderColor = "transparent";
+        panel.style.top = top;
+        panel.style.height = height;
         layout.append(panel);
       });
       backing.style.backgroundColor = item.bg;
@@ -629,11 +656,20 @@
       const body = document.createElement("div");
       body.className = "flap-body";
       const inside = makeLabel(item.secondary, "flap-inside");
-      const front = makeLabel(item.text, "flap-front");
+      // The flap has two faces: the printed front and the plain back that shows when it is lifted.
+      const front = document.createElement("div");
+      front.className = "flap-front";
+      const face = makeLabel(item.text, "flap-face");
+      const back = document.createElement("div");
+      back.className = "flap-back";
+      face.dataset.tap = "toggle";
+      back.dataset.tap = "toggle";
       inside.style.color = item.color;
       inside.style.borderColor = item.bg;
-      front.style.backgroundColor = item.bg;
-      front.style.color = item.color;
+      face.style.backgroundColor = item.bg;
+      face.style.color = item.color;
+      back.style.backgroundColor = item.bg;
+      front.append(face, back);
       body.append(inside, front);
       node.append(body, makeToggle(item, item.open ? "Klappe schließen" : "Klappe öffnen"));
     } else if (item.type === "accordion") {
@@ -649,10 +685,19 @@
       node.append(panels, makeToggle(item, item.open ? "Akkordeon schließen" : "Akkordeon auffalten"));
     } else if (item.type === "booklet") {
       const inside = makeLabel(item.secondary, "booklet-inside");
-      const cover = makeLabel(item.text, "booklet-cover");
+      // The cover swings open around the left edge; its back shows the inside of the cover.
+      const cover = document.createElement("div");
+      cover.className = "booklet-cover";
+      const coverFace = makeLabel(item.text, "booklet-face");
+      const coverBack = document.createElement("div");
+      coverBack.className = "booklet-back";
+      coverFace.dataset.tap = "toggle";
+      coverBack.dataset.tap = "toggle";
       inside.style.color = item.color;
-      cover.style.backgroundColor = item.bg;
-      cover.style.color = item.color;
+      coverFace.style.backgroundColor = item.bg;
+      coverFace.style.color = item.color;
+      coverBack.style.backgroundColor = item.bg;
+      cover.append(coverFace, coverBack);
       node.append(inside, cover, makeToggle(item, item.open ? "Buch schließen" : "Buch öffnen"));
     } else if (item.type === "wheel") {
       const face = document.createElement("div");
@@ -1048,7 +1093,12 @@
       id: item.id,
       pointerId: event.pointerId,
       offsetX: event.clientX - rect.left - (item.x / 1000) * rect.width,
-      offsetY: event.clientY - rect.top - (item.y / 700) * rect.height
+      offsetY: event.clientY - rect.top - (item.y / 700) * rect.height,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+      // A tap (no movement) on a flap face opens or closes the element.
+      tapToggle: Boolean(event.target.closest("[data-tap='toggle']"))
     };
     itemNode.setPointerCapture(event.pointerId);
     event.preventDefault();
@@ -1058,6 +1108,8 @@
     if (!drag || drag.pointerId !== event.pointerId) return;
     const item = project.elements.find(function (entry) { return entry.id === drag.id; });
     if (!item) return;
+    if (!drag.moved && Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY) < 5) return;
+    drag.moved = true;
     const rect = stage.getBoundingClientRect();
     const x = ((event.clientX - rect.left - drag.offsetX) / rect.width) * 1000;
     const y = ((event.clientY - rect.top - drag.offsetY) / rect.height) * 700;
@@ -1076,9 +1128,53 @@
 
   function finishDrag(event) {
     if (!drag || (event && drag.pointerId !== event.pointerId)) return;
+    const finished = drag;
     drag = null;
+    if (!finished.moved && finished.tapToggle && event && event.type === "pointerup") {
+      const tapped = project.elements.find(function (entry) { return entry.id === finished.id; });
+      if (tapped) toggleItem(tapped);
+      return;
+    }
     persist();
   }
+
+  // Opens or closes an element in place, so the CSS transition can play.
+  function toggleItem(item) {
+    const node = stageElements.querySelector('[data-id="' + item.id + '"]');
+    if (item.type === "wheel") {
+      const step = 360 / Math.max(2, getPanelTexts(item).length);
+      const disc = node && node.querySelector(".wheel-disc");
+      if (disc) {
+        const spin = (Number(disc.dataset.spin) || 0) + step;
+        disc.dataset.spin = String(spin);
+        disc.style.transform = "rotate(" + spin + "deg)";
+        item.rotation = spin % 360;
+      } else {
+        item.rotation = (item.rotation + step) % 360;
+        renderStage();
+      }
+      persist();
+      return;
+    }
+    item.open = !item.open;
+    if (!node) {
+      renderStage();
+    } else {
+      node.classList.toggle("is-open", item.open);
+      const layout = node.querySelector(".catalog-layout");
+      if (layout) layout.classList.toggle("is-open", item.open);
+      const button = node.querySelector(".fold-toggle");
+      if (button) {
+        button.textContent = item.open ? "↶" : "↗";
+        button.title = item.open ? "Zuklappen" : "Aufklappen";
+        button.setAttribute("aria-label", button.title);
+      }
+    }
+    persist();
+  }
+
+  // Types whose single panels only depend on the panel's own is-open class.
+  const inPlacePanelTypes = new Set(["flipflap", "pocket4", "foldcross", "flower", "foldheart"]);
   stage.addEventListener("pointerup", finishDrag);
   stage.addEventListener("pointercancel", finishDrag);
 
@@ -1094,7 +1190,13 @@
       if (current.has(panelIndex)) current.delete(panelIndex);
       else current.add(panelIndex);
       panelItem.openPanels = Array.from(current).sort(function (a, b) { return a - b; });
-      renderStage();
+      if (inPlacePanelTypes.has(panelItem.type)) {
+        // Keep the node so the panel animates.
+        panelToggle.classList.toggle("is-open", current.has(panelIndex));
+        panelToggle.setAttribute("aria-pressed", String(current.has(panelIndex)));
+      } else {
+        renderStage();
+      }
       persist();
       return;
     }
@@ -1108,10 +1210,7 @@
         openPocket(item.id);
         return;
       }
-      if (item.type === "wheel") item.rotation = (item.rotation + 360 / Math.max(2, getPanelTexts(item).length)) % 360;
-      else item.open = !item.open;
-      renderStage();
-      persist();
+      toggleItem(item);
       return;
     }
     if (!event.target.closest(".element")) {

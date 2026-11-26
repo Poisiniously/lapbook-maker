@@ -160,17 +160,25 @@ button { cursor: pointer; }
 .fold-toggle:hover { background: white; transform: scale(1.06); }
 .flap-body { position: absolute; inset: 0; perspective: 700px; }
 .flap-inside { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; background: #fffaf0; border: 1px solid #dfcfa9; color: #736348; border-radius: 3px; }
-.flap-front { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; background: #e7dafa; border: 1px solid #c4b0e8; color: #63517e; transform-origin: top center; transition: transform .5s ease; backface-visibility: hidden; z-index: 2; border-radius: 3px; }
-.type-flap.is-open .flap-front { transform: rotateX(-150deg); }
+/* Flap: hinged at the top edge. When lifted, its plain back stays visible above the card. */
+.flap-front { position: absolute; inset: 0; transform-origin: top center; transform-style: preserve-3d; transition: transform .6s ease; z-index: 2; }
+.flap-face, .flap-back { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; border: 1px solid #c4b0e8; border-radius: 3px; backface-visibility: hidden; cursor: pointer; overflow-wrap: anywhere; }
+.flap-back { transform: rotateX(180deg); background-image: linear-gradient(#0000000d, #0000000d); }
+.type-flap.is-open .flap-front { transform: rotateX(-172deg); }
 .accordion-panels { position: absolute; inset: 0; display: flex; align-items: stretch; gap: 2px; overflow: hidden; }
 .accordion-panel { display: flex; align-items: center; justify-content: center; min-width: 0; flex: 1; padding: 6px; border: 1px solid #c9b7e6; background: #e8def8; color: #63517f; font-size: .8em; overflow: hidden; }
 .accordion-panel:nth-child(2) { background: #f4e2eb; border-color: #e3c6d5; }
 .accordion-panel:nth-child(3) { background: #e1eee5; border-color: #c7dfcf; }
 .type-accordion:not(.is-open) .accordion-panel:not(:first-child) { display: none; }
 .type-accordion:not(.is-open) .accordion-panel:first-child { flex: 1; }
-.booklet-cover { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; border: 1px solid #bba9df; background: #d9cdf2; color: #5f4b87; transform-origin: left center; transition: transform .45s ease; z-index: 2; backface-visibility: hidden; }
+/* Mini book: the cover swings open around the left edge; its back is the inside of the cover. */
+.type-booklet { perspective: 900px; }
+.booklet-cover { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; transition: transform .6s ease; z-index: 2; }
+.booklet-face, .booklet-back { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; border: 1px solid #bba9df; backface-visibility: hidden; cursor: pointer; overflow-wrap: anywhere; }
+.booklet-face { color: #5f4b87; box-shadow: inset 7px 0 7px -5px #3a2b5c40; }
+.booklet-back { transform: rotateY(180deg); background-image: linear-gradient(#ffffff59, #ffffff59); box-shadow: inset -7px 0 7px -5px #3a2b5c30; }
 .booklet-inside { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; border: 1px solid #dac9b5; background: #fff9ec; color: #77664e; }
-.type-booklet.is-open .booklet-cover { transform: rotateY(-145deg); }
+.type-booklet.is-open .booklet-cover { transform: rotateY(-176deg); }
 .pocket-card { position: absolute; left: 12%; right: 12%; top: -12%; height: 70%; display: flex; align-items: center; justify-content: center; padding: 7px; background: #fff9e9; border: 1px solid #e1d1ad; color: #77664d; z-index: 1; overflow: hidden; text-align: center; font-size: .85em; }
 .pocket-stack-edge { position: absolute; left: 12%; right: 12%; top: -12%; height: 70%; background: #fff9e9; border: 1px solid #e1d1ad; z-index: 0; transform: translate(calc(var(--layer) * 2px), calc(var(--layer) * -2px)); }
 .pocket-front { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; display: flex; align-items: center; justify-content: center; padding: 8px; background: #e6dafa; border: 1px solid #c6b4e8; color: #62517f; clip-path: polygon(0 0,50% 28%,100% 0,100% 100%,0 100%); z-index: 2; }
@@ -401,12 +409,16 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 
 
 .flipflap-backing { position: absolute; right: 0; top: 0; bottom: 0; width: 52%; display: grid; place-items: center; border: 1.5px solid #49444d; background: #fffaf0; font-size: .75em; font-weight: 750; }
-.flipflap-panel { left: 0; width: 49%; height: 25%; transform-origin: right center; }
-.flipflap-panel-0 { top: 0; }
-.flipflap-panel-1 { top: 25%; }
-.flipflap-panel-2 { top: 50%; }
-.flipflap-panel-3 { top: 75%; }
-.flipflap-panel.is-open { transform: translateX(105%) rotateY(-22deg); }
+/* Flip-Flap: each strip is hinged at the crease and folds over onto the right half. */
+.flipflap-layout { perspective: 900px; }
+.flipflap-under { position: absolute; left: 0; width: 49%; z-index: 1; display: flex; align-items: center; justify-content: center; padding: 4px; border: 1px solid #d9cfb8; background: #fffaf0; font-size: .72em; line-height: 1.15; text-align: center; white-space: pre-wrap; overflow-wrap: anywhere; }
+.flipflap-backing { z-index: 1; }
+.flipflap-panel { left: 0; width: 49%; padding: 0; z-index: 3; transform-origin: right center; transform-style: preserve-3d; transition: transform .55s ease; }
+.flip-face, .flip-back { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 5px; border: 1.5px solid #49444d; backface-visibility: hidden; overflow-wrap: anywhere; }
+.flip-back { transform: rotateY(180deg); background-image: linear-gradient(#0000000d, #0000000d); }
+.flipflap-panel.is-open { transform: rotateY(180deg); }
+/* A filter would flatten the 3D flip, so the generic panel hover styles are switched off here. */
+.flipflap-panel, .flipflap-panel:hover, .flipflap-panel.is-open { filter: none; box-shadow: none; }
 .flipflap-crease { top: 0; bottom: 0; left: 49%; border-left: 1.5px dashed #655d70; }
 .flipflap-cut { inset: 0; border: 1.5px solid #49444d; }
 .flipflap-glue { right: 0; top: 0; bottom: 0; width: 4%; }
