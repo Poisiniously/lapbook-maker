@@ -428,7 +428,7 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 
 .field-help { color: #978fa2; font-size: 10px; line-height: 1.45; margin: 6px 0 0; }
 @media (max-width: 850px) {
-  .tools-panel, .inspector-panel { max-height: none; overflow: visible; }
+  .tools-panel, .inspector-panel { max-height: 55dvh; overflow-y: auto; }
   .workspace { position: static; height: auto; align-self: auto; }
 }
 @media (max-width: 580px) {
