@@ -359,7 +359,7 @@
       const sides = clamp(Number(item.centerSides) || count, 3, 12);
       const step = 360 / sides;
       const apothem = 20.6 * Math.cos(Math.PI / sides); // polygon radius is 49% of the 42% box
-      const petalWidth = clamp(2 * apothem * Math.tan(Math.PI / sides) * 0.95, 16, 34);
+      const petalWidth = clamp(2 * apothem * Math.tan(Math.PI / sides) * 1.25, 16, 36);
       const petalHeight = 30;
       labels.forEach(function (label, index) {
         const petal = makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label);
