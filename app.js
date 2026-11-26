@@ -46,7 +46,7 @@
     foldcross: { type: "foldcross", w: 230, h: 230, text: "Mitte", secondary: "Oben|Rechts|Unten|Links", bg: "#e7dafa", color: "#63517e" },
     foldsheet: { type: "foldsheet", w: 180, h: 255, text: "Faltblatt", secondary: "Feld 1|Feld 2|Feld 3", bg: "#e9defa", color: "#5f4b87" },
     hexfold: { type: "hexfold", w: 200, h: 350, text: "Sechseck", secondary: "Innenseite", bg: "#d8e9df", color: "#4f7560" },
-    "leporello-figure": { type: "leporello-figure", w: 220, h: 285, text: "Meine Figur", secondary: "Kopf|Oberkörper|Mitte|Unterteil", bg: "#e8def8", color: "#62517f" },
+    "leporello-figure": { type: "leporello-figure", w: 220, h: 380, text: "Meine Figur", secondary: "Kopf|Oberkörper|Mitte|Unterteil", bg: "#e8def8", color: "#62517f" },
     flipflap: { type: "flipflap", w: 275, h: 215, text: "Flip-Flap", secondary: "Klappe 1|Klappe 2|Klappe 3|Klappe 4|Klappe 5", bg: "#e7dafa", color: "#63517e" },
     foldheart: { type: "foldheart", w: 235, h: 220, text: "Faltherz", secondary: "Herz 1|Herz 2|Herz 3|Herz 4", bg: "#f4d7e5", color: "#80516b" }
   };
@@ -341,9 +341,10 @@
       const front = document.createElement("div");
       front.className = "wheel-front";
       front.style.backgroundColor = item.bg;
-      // Polygon from the center around the circle, leaving out the 0°–90° window.
+      // Polygon from the center around the circle, leaving out one segment-wide window at the top.
+      const windowAngle = 360 / count;
       const frontPoints = ["50% 50%"];
-      for (let deg = 90; deg <= 360; deg += 3) {
+      for (let deg = windowAngle; deg <= 360; deg += 3) {
         const rad = deg * Math.PI / 180;
         frontPoints.push((50 + 50 * Math.sin(rad)).toFixed(2) + "% " + (50 - 50 * Math.cos(rad)).toFixed(2) + "%");
       }
@@ -514,7 +515,14 @@
       });
       const upper = document.createElement("div");
       upper.className = "hexfold-part hexfold-upper";
-      upper.textContent = item.text;
+      // Front shows the title; the back, visible when folded, shows the inside label.
+      const upperFront = document.createElement("span");
+      upperFront.className = "hexfold-label-front";
+      upperFront.textContent = item.text;
+      const upperBack = document.createElement("span");
+      upperBack.className = "hexfold-label-back";
+      upperBack.textContent = labels[0] || "Innenseite";
+      upper.append(upperFront, upperBack);
       upper.style.backgroundColor = item.bg;
       upper.style.color = item.color;
       layout.append(lower, upper, makeToggle(item, "Sechseck auf- oder zuklappen"));
@@ -566,18 +574,16 @@
       addConstructionGuide(layout, "guide-cut flipflap-cut");
       addConstructionGuide(layout, "guide-glue flipflap-glue");
     } else if (item.type === "foldheart") {
+      // Each heart's tip sits in the center; the hearts radiate outward from it.
       const heartWidth = clamp(47 - (count - 4) * 2.8, 24, 47);
       const heartHeight = clamp(48 - (count - 4) * 2.7, 25, 48);
       labels.forEach(function (label, index) {
         const petal = makeTemplatePanel(item, index, "heart-petal heart-petal-" + index, label);
-        const angle = -90 + index * 360 / count;
-        const radians = angle * Math.PI / 180;
         petal.style.width = heartWidth + "%";
         petal.style.height = heartHeight + "%";
-        petal.style.left = (50 + 31 * Math.cos(radians) - heartWidth / 2) + "%";
-        petal.style.top = (50 + 31 * Math.sin(radians) - heartHeight / 2) + "%";
-        petal.style.setProperty("--base-rotation", (angle + 90) + "deg");
-        petal.style.transform = "rotate(" + (angle + 90) + "deg)";
+        petal.style.left = (50 - heartWidth / 2) + "%";
+        petal.style.top = (50 - heartHeight) + "%";
+        petal.style.setProperty("--base-rotation", (index * 360 / count) + "deg");
         layout.append(petal);
       });
       center.classList.add("heart-center");
@@ -1023,7 +1029,7 @@
       const item = project.elements.find(function (entry) { return entry.id === node.dataset.id; });
       if (!item) return;
       selectElement(item.id);
-      if (item.type === "wheel") item.rotation = (item.rotation + 90) % 360;
+      if (item.type === "wheel") item.rotation = (item.rotation + 360 / Math.max(2, getPanelTexts(item).length)) % 360;
       else item.open = !item.open;
       renderStage();
       persist();
