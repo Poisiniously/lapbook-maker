@@ -1,6 +1,6 @@
 # Lapbook Maker
 
-A browser-based editor for designing digital lapbooks with interactive flaps, accordion folds, mini booklets, pockets, spinning wheels, tabs, and decorative paper shapes.
+A browser-based editor for designing digital lapbooks with interactive flaps, accordion folds, mini booklets, pockets, spinning wheels, tabs, and decorative paper shapes. Only supports German at the moment. 
 
 ## Features
 
@@ -13,10 +13,6 @@ A browser-based editor for designing digital lapbooks with interactive flaps, ac
 - Export and import projects as JSON files.
 - Print the canvas or save it as a PDF using the browser's print dialog.
 
-## Run locally
-
-No build step or dependencies are required. Open \`index.html\` in a modern browser, or serve the folder with any static web server.
-
 ## GitHub Pages
 
 This repository is a static website. In GitHub, open **Settings → Pages**, select the \`main\` branch and the root folder, and save. GitHub Pages will publish \`index.html\`.
@@ -24,15 +20,6 @@ This repository is a static website. In GitHub, open **Settings → Pages**, sel
 ## Storage
 
 Projects are saved in the browser on the current device. Use **Exportieren** to keep a portable backup or move a project to another browser.
-
-
-## Lapbook-template catalog
-
-The editor includes the paper constructions from the RESTLOS GLÜCKLICH / Sarah Wiener Stiftung worksheet catalog: flower fold, four-card pocket, two fan styles, accordion leporello, folding cross, tri-fold sheet, hexagon fold, figure leporello, flip-flap, and folding heart. The spinning wheel has four editable segments.
-
-Each construction can be edited on the canvas. Use the fold controls or individual panels to preview how it opens. The **Linien** control switches construction guides on and off; the print view keeps cut, fold, and glue guides visible.
-
-Reference worksheet: [Meinem Schulessen auf der Spur – Lapbook-Kopiervorlagen](https://www.restlos-gluecklich.berlin/wp-content/uploads/2021/08/MeinemSchulessenaufderSpur_Lapbook_Kopiervorlagen_V2.pdf).
 
 ### Individual panel editing
 
