@@ -1174,3 +1174,14 @@
   persist();
   applyZoom();
 })();
+
+// Theme toggle: switches light and dark and remembers the choice.
+(function () {
+  const toggle = document.getElementById("theme-toggle");
+  if (!toggle) return;
+  toggle.addEventListener("click", function () {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("lapbook-theme", next); } catch (error) { /* storage unavailable */ }
+  });
+})();

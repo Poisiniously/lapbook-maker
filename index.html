@@ -10,6 +10,15 @@
   <script src="app.js?v=template-geometry-1" defer></script>
 </head>
 <body>
+  <script>
+    // Apply the saved theme before first paint; fall back to the system setting.
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("lapbook-theme"); } catch (e) {}
+      var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    })();
+  </script>
   <header class="topbar">
     <a class="brand" href="#" aria-label="Lapbook Maker Startseite">
       <span class="brand-mark">L</span>
@@ -21,6 +30,7 @@
       <span class="save-state" id="save-state"><span class="save-dot"></span> Lokal gespeichert</span>
     </div>
     <div class="top-actions">
+      <button class="button button-quiet" id="theme-toggle" type="button" title="Hell oder dunkel umschalten" aria-label="Farbschema umschalten">◐</button>
       <button class="button button-quiet" id="new-project" type="button" title="Neues Lapbook">Neu</button>
       <button class="button button-danger" id="clear-all" type="button" title="Alle Elemente von der Arbeitsfläche löschen">Alles löschen</button>
       <button class="button button-quiet" id="import-project" type="button" title="Lapbook importieren">Importieren</button>
