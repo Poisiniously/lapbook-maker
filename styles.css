@@ -257,26 +257,29 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .flower-fold-b { left: 50%; top: 8%; bottom: 8%; border-left: 1px dashed #655d70; transform: rotate(-36deg); }
 .flower-glue { width: 12%; height: 12%; left: 44%; top: 44%; border-radius: 50%; }
 
-.pocket4-card { width: 37%; height: 40%; top: 3%; }
-.pocket4-card-0 { left: 6%; transform: rotate(-8deg); }
-.pocket4-card-1 { left: 27%; transform: rotate(-3deg); }
-.pocket4-card-2 { left: 48%; transform: rotate(3deg); }
-.pocket4-card-3 { left: 65%; transform: rotate(8deg); }
-.pocket4-card.is-open { top: 0; transform: translateY(-25%) rotate(0deg); z-index: 6; }
-.pocket4-front { position: absolute; z-index: 7; left: 7%; right: 7%; bottom: 3%; height: 58%; display: grid; place-items: center; padding: 12px; border: 1.5px solid #49444d; clip-path: polygon(0 0,100% 0,94% 100%,6% 100%); text-align: center; font-size: .8em; font-weight: 700; }
-.pocket4-cut { inset: 1% 6% 2%; }
-.pocket4-fold { left: 8%; right: 8%; bottom: 61%; border-top: 1.5px dashed #655d70; }
-.pocket4-glue { left: 0; right: 0; bottom: 0; height: 12%; }
+.pocket4-card { font-size: .8em; }
+.pocket4-card.is-open { transform: translateY(-62%); box-shadow: 0 5px 12px rgba(40,30,50,.2); z-index: 6; }
+.pocket4-body { position: absolute; z-index: 5; left: 16%; right: 16%; top: 0; height: 52%; display: grid; place-items: center; padding: 10px; border: 1.5px solid #49444d; text-align: center; font-size: .8em; font-weight: 700; }
+.pocket4-tab { position: absolute; z-index: 4; background: #bdbdbd; }
+.pocket4-tab-left { left: 0; top: 2%; width: 16%; height: 48%; clip-path: polygon(0 10%,100% 0,100% 100%,0 90%); }
+.pocket4-tab-right { right: 0; top: 2%; width: 16%; height: 48%; clip-path: polygon(100% 10%,0 0,0 100%,100% 90%); }
+.pocket4-tab-bottom { left: 16%; right: 16%; top: 52%; height: 12%; clip-path: polygon(0 0,100% 0,90% 100%,10% 100%); }
+.pocket4-cut { left: 16%; right: 16%; top: 0; height: 52%; }
+.pocket4-fold { left: 16%; right: 16%; top: 52%; border-top: 1.5px dashed #655d70; }
+.pocket4-glue { left: 16%; right: 16%; top: 52%; height: 12%; }
 
 .wheel-disc { position: absolute; inset: 3%; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; border: 2px solid #49444d; border-radius: 50%; transition: transform .45s ease; }
-.wheel-sector { display: grid; place-items: center; padding: 10px 7px; border: 1px solid rgba(65,55,70,.5); font-size: .7em; text-align: center; }
+.wheel-sector { display: grid; place-items: center; padding: 10px 7px; border: 1px solid rgba(65,55,70,.5); font-size: .9em; text-align: center; }
 .wheel-hub { position: absolute; left: 37%; top: 37%; width: 26%; height: 26%; display: grid; place-items: center; border: 2px solid #49444d; border-radius: 50%; background: #fffdf7; color: #51445e; font-size: .68em; font-weight: 750; }
+.wheel-front { position: absolute; z-index: 3; inset: 3%; border: 2px solid #49444d; border-radius: 50%; pointer-events: none; }
+.wheel-pin { position: absolute; z-index: 4; left: 50%; top: 50%; width: 9%; height: 9%; transform: translate(-50%, -50%); border: 2px solid #49444d; border-radius: 50%; background: #fffdf7; pointer-events: none; }
 .wheel-layout .fold-toggle { right: 2%; bottom: 2%; }
 .wheel-pivot { left: 50%; top: 0; bottom: 0; border-left: 1.5px dashed #655d70; }
 
 .fan1-blade { left: 9%; top: 38%; width: 84%; height: 24%; transform-origin: 8% 50%; border-radius: 1px 8px 8px 1px; }
 .fan1-layout:not(.is-open) .fan1-blade { transform: rotate(0deg) !important; }
 .fan1-layout.is-open .fan1-blade { box-shadow: 0 2px 5px rgba(40,30,50,.08); }
+.fan1-blade { justify-content: flex-end; padding-right: 12px; }
 .fan-pivot { position: absolute; z-index: 8; left: 4%; top: 46%; width: 10%; height: 12%; display: grid; place-items: center; border: 2px solid #49444d; border-radius: 50%; background: #c9b6e8; font-size: 0; }
 .fan-cut { left: 7%; top: 36%; width: 88%; height: 28%; border: 1.5px solid #49444d; border-radius: 0 7px 7px 0; }
 .fan-pivot-line { left: 9%; top: 37%; bottom: 37%; border-left: 1.5px dashed #655d70; }
@@ -287,16 +290,16 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .fan2-strip-1 { top: 19%; }
 .fan2-strip-2 { top: 38%; }
 .fan2-strip-3 { top: 57%; }
-.fan2-strip.is-expanded { left: 21%; width: 76%; transform: translateX(2%); z-index: 7 !important; }
+.fan2-strip.is-expanded { transform: translateX(4%); z-index: 7 !important; }
 .fan2-fold { top: 0; bottom: 0; left: 17%; border-left: 1.5px dashed #655d70; }
 .fan2-glue-guide { left: 0; top: 0; bottom: 0; width: 17%; }
 
-.leporello-layout { display: flex; border: 1.5px solid #49444d; }
-.leporello-panel { display: flex; flex: 1 1 25%; align-items: center; justify-content: center; min-width: 0; padding: 7px; border-right: 1px solid #49444d; font-size: .72em; text-align: center; overflow-wrap: anywhere; }
-.leporello-panel:last-of-type { border-right: 0; }
+.leporello-layout { display: flex; flex-direction: column; border: 1.5px solid #49444d; }
+.leporello-panel { display: flex; flex: 1 1 25%; align-items: center; justify-content: center; min-width: 0; padding: 7px; border-bottom: 1px solid #49444d; font-size: .72em; text-align: center; overflow-wrap: anywhere; }
+.leporello-panel:last-child { border-bottom: 0; }
 .leporello-layout:not(.is-open) .leporello-panel:not(:first-child) { display: none; }
 .leporello-layout:not(.is-open) .leporello-panel:first-child { flex: 1; }
-.leporello-crease { top: 0; bottom: 0; border-left: 1.5px dashed #655d70; }
+.leporello-crease { left: 0; right: 0; border-top: 1.5px dashed #655d70; }
 .leporello-crease.crease-0 { left: 25%; }
 .leporello-crease.crease-1 { left: 50%; }
 .leporello-crease.crease-2 { left: 75%; }
@@ -304,7 +307,7 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .leporello-layout .fold-toggle, .foldsheet-layout .fold-toggle, .hexfold-layout .fold-toggle, .leporello-figure-layout .fold-toggle { right: 3px; bottom: 3px; }
 
 .foldcross-layout { overflow: visible; }
-.cross-center { position: absolute; left: 32%; top: 32%; width: 36%; height: 36%; display: grid; place-items: center; z-index: 2; border: 1.5px dashed #655d70; font-size: .7em; font-weight: 750; }
+.cross-center { position: absolute; left: 33.33%; top: 33.33%; width: 33.34%; height: 33.34%; display: grid; place-items: center; z-index: 2; border: 1.5px dashed #655d70; font-size: .7em; font-weight: 750; }
 .cross-flap { width: 36%; height: 32%; }
 .cross-top { left: 32%; top: 0; transform-origin: center bottom; }
 .cross-right { right: 0; top: 32%; transform-origin: left center; }
@@ -329,12 +332,12 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .foldsheet-crease.crease-1 { top: 66.666%; }
 .foldsheet-cut { inset: 0; border: 1.5px solid #49444d; }
 
-.hexfold-part { position: absolute; left: 10%; width: 80%; height: 53%; display: grid; place-items: center; padding: 12px; border: 1.5px solid #49444d; clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%); font-size: .72em; text-align: center; }
+.hexfold-part { position: absolute; left: 0; width: 100%; height: 50%; display: grid; place-items: center; padding: 12px; border: 1.5px solid #49444d; clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%); font-size: .72em; text-align: center; }
 .hexfold-lower { bottom: 0; }
 .hexfold-upper { top: 0; z-index: 2; transform-origin: center bottom; transition: transform .45s ease; }
 .hexfold-layout.is-open .hexfold-upper { transform: rotateX(-140deg); }
-.hexfold-crease { left: 10%; right: 10%; top: 50%; border-top: 1.5px dashed #655d70; }
-.hexfold-cut { inset: 1% 10%; }
+.hexfold-crease { left: 0; right: 0; top: 50%; border-top: 1.5px dashed #655d70; }
+.hexfold-cut { inset: 0; }
 
 .figure-head { position: absolute; left: 41%; top: 0; width: 18%; height: 16%; display: grid; place-items: center; border: 1.5px solid #49444d; border-radius: 50%; background: #eadff8; color: #74628e; font-size: 1.3em; }
 .figure-arms { position: absolute; left: 9%; top: 18%; width: 82%; height: 16%; border: 1.5px solid #49444d; border-radius: 45%; background: #eadff8; }

@@ -30,7 +30,7 @@
     accordion: { type: "accordion", w: 255, h: 105, text: "Teil 1", secondary: "Teil 2|Teil 3", bg: "#e8def8", color: "#63517f" },
     booklet: { type: "booklet", w: 155, h: 180, text: "Mini-Buch", secondary: "Dein Wissen auf mehreren Seiten.", bg: "#d9cdf2", color: "#5f4b87" },
     pocket: { type: "pocket", w: 190, h: 135, text: "Wissens-Tasche", secondary: "Zieh mich heraus!", bg: "#e6dafa", color: "#62517f" },
-    wheel: { type: "wheel", w: 160, h: 160, text: "Drehen", secondary: "Thema", bg: "#e7dcf8", color: "#7055a4" },
+    wheel: { type: "wheel", w: 200, h: 200, text: "Drehen", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e7dcf8", color: "#7055a4" },
     tab: { type: "tab", w: 125, h: 48, text: "KAPITEL 1", secondary: "", bg: "#d8ccf4", color: "#65518d" },
     note: { type: "note", w: 180, h: 120, text: "Schreibe hier deine Notiz.", secondary: "", bg: "#fff3cf", color: "#725a32" },
     circle: { type: "circle", w: 125, h: 125, text: "Kreis", secondary: "", bg: "#e9defa", color: "#594b72" },
@@ -39,15 +39,15 @@
     hexagon: { type: "hexagon", w: 160, h: 125, text: "Sechseck", secondary: "", bg: "#d5e9df", color: "#4f7560" },
     banner: { type: "banner", w: 270, h: 75, text: "Mein Thema", secondary: "", bg: "#f3cddd", color: "#87536e" },
     flower: { type: "flower", w: 230, h: 220, text: "Blütenmitte", secondary: "Blatt 1|Blatt 2|Blatt 3|Blatt 4|Blatt 5", bg: "#f4d7e5", color: "#80516b" },
-    pocket4: { type: "pocket4", w: 245, h: 190, text: "Meine Tasche", secondary: "Karte 1|Karte 2|Karte 3|Karte 4", bg: "#e8def8", color: "#62517f" },
+    pocket4: { type: "pocket4", w: 250, h: 260, text: "Meine Tasche", secondary: "Karte 1|Karte 2|Karte 3|Karte 4", bg: "#e8def8", color: "#62517f" },
     fan1: { type: "fan1", w: 250, h: 185, text: "Fächer", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e8def8", color: "#62517f" },
     fan2: { type: "fan2", w: 250, h: 210, text: "Fächer 2", secondary: "Teil 1|Teil 2|Teil 3|Teil 4", bg: "#e8def8", color: "#62517f" },
-    leporello: { type: "leporello", w: 280, h: 150, text: "Leporello", secondary: "Seite 1|Seite 2|Seite 3|Seite 4", bg: "#e5dafa", color: "#5f4b87" },
+    leporello: { type: "leporello", w: 200, h: 320, text: "Leporello", secondary: "Seite 1|Seite 2|Seite 3|Seite 4", bg: "#e5dafa", color: "#5f4b87" },
     foldcross: { type: "foldcross", w: 230, h: 230, text: "Mitte", secondary: "Oben|Rechts|Unten|Links", bg: "#e7dafa", color: "#63517e" },
     foldsheet: { type: "foldsheet", w: 180, h: 255, text: "Faltblatt", secondary: "Feld 1|Feld 2|Feld 3", bg: "#e9defa", color: "#5f4b87" },
-    hexfold: { type: "hexfold", w: 190, h: 220, text: "Sechseck", secondary: "Innenseite", bg: "#d8e9df", color: "#4f7560" },
+    hexfold: { type: "hexfold", w: 200, h: 350, text: "Sechseck", secondary: "Innenseite", bg: "#d8e9df", color: "#4f7560" },
     "leporello-figure": { type: "leporello-figure", w: 220, h: 285, text: "Meine Figur", secondary: "Kopf|Oberkörper|Mitte|Unterteil", bg: "#e8def8", color: "#62517f" },
-    flipflap: { type: "flipflap", w: 275, h: 215, text: "Flip-Flap", secondary: "Klappe 1|Klappe 2|Klappe 3|Klappe 4", bg: "#e7dafa", color: "#63517e" },
+    flipflap: { type: "flipflap", w: 275, h: 215, text: "Flip-Flap", secondary: "Klappe 1|Klappe 2|Klappe 3|Klappe 4|Klappe 5", bg: "#e7dafa", color: "#63517e" },
     foldheart: { type: "foldheart", w: 235, h: 220, text: "Faltherz", secondary: "Herz 1|Herz 2|Herz 3|Herz 4", bg: "#f4d7e5", color: "#80516b" }
   };
 
@@ -58,7 +58,7 @@
   const multiPartCounts = {
     accordion: 2, wheel: 4, flower: 5, pocket4: 4,
     fan1: 4, fan2: 4, leporello: 4, foldcross: 4, foldsheet: 3,
-    hexfold: 2, "leporello-figure": 4, flipflap: 4, foldheart: 4
+    hexfold: 2, "leporello-figure": 4, flipflap: 5, foldheart: 4
   };
   const minPartCounts = { flower: 3, wheel: 2, pocket4: 2, fan1: 2, fan2: 2, leporello: 2, foldcross: 2, foldsheet: 2, "leporello-figure": 2, flipflap: 2, foldheart: 2 };
 
@@ -337,7 +337,20 @@
       hub.textContent = item.text;
       hub.style.color = item.color;
       disc.append(hub);
-      layout.append(disc, makeToggle(item, "Drehscheibe um 90 Grad drehen"));
+      // Static top disc with a 90° window: the rotating disc shows through it.
+      const front = document.createElement("div");
+      front.className = "wheel-front";
+      front.style.backgroundColor = item.bg;
+      // Polygon from the center around the circle, leaving out the 0°–90° window.
+      const frontPoints = ["50% 50%"];
+      for (let deg = 90; deg <= 360; deg += 3) {
+        const rad = deg * Math.PI / 180;
+        frontPoints.push((50 + 50 * Math.sin(rad)).toFixed(2) + "% " + (50 - 50 * Math.cos(rad)).toFixed(2) + "%");
+      }
+      front.style.clipPath = "polygon(" + frontPoints.join(", ") + ")";
+      const pin = document.createElement("span");
+      pin.className = "wheel-pin";
+      layout.append(disc, front, pin, makeToggle(item, "Drehscheibe um 90 Grad drehen"));
       addConstructionGuide(layout, "guide-fold wheel-pivot");
       addConstructionGuide(layout, "guide-cut guide-circle");
     } else if (item.type === "flower") {
@@ -368,25 +381,38 @@
       addConstructionGuide(layout, "guide-fold flower-fold flower-fold-b");
       addConstructionGuide(layout, "guide-glue flower-glue");
     } else if (item.type === "pocket4") {
+      const body = document.createElement("div");
+      body.className = "pocket4-body";
+      body.textContent = item.text;
+      body.style.backgroundColor = item.bg;
+      body.style.color = item.color;
+      const tabs = ["pocket4-tab-left", "pocket4-tab-right", "pocket4-tab-bottom"].map(function (name) {
+        const tab = document.createElement("span");
+        tab.className = "pocket4-tab " + name;
+        return tab;
+      });
+      layout.append(...tabs, body);
+      // Cards sit in a grid below the pocket, two per row, like the template sheet.
+      const cols = count <= 2 ? count : 2;
+      const rows = Math.ceil(count / cols);
+      const cellHeight = 33 / rows;
       labels.forEach(function (label, index) {
         const card = makeTemplatePanel(item, index, "pocket4-card pocket4-card-" + index, label);
-        card.style.width = Math.min(37, 88 / count) + "%";
-        card.style.left = (6 + index * (88 / count)) + "%";
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        card.style.left = (6 + col * 47) + "%";
+        card.style.top = (66 + row * cellHeight) + "%";
+        card.style.width = "41%";
+        card.style.height = (cellHeight * 0.88) + "%";
         layout.append(card);
       });
-      const pocket = document.createElement("div");
-      pocket.className = "pocket4-front";
-      pocket.textContent = item.text;
-      pocket.style.backgroundColor = item.bg;
-      pocket.style.color = item.color;
-      layout.append(pocket);
       addConstructionGuide(layout, "guide-cut pocket4-cut");
       addConstructionGuide(layout, "guide-fold pocket4-fold");
       addConstructionGuide(layout, "guide-glue pocket4-glue");
     } else if (item.type === "fan1") {
       labels.forEach(function (label, index) {
         const blade = makeTemplatePanel(item, index, "fan1-blade fan1-blade-" + index, label);
-        const baseAngle = count === 1 ? 0 : -25 + index * 50 / (count - 1);
+        const baseAngle = count === 1 ? 0 : -38 + index * 76 / (count - 1);
         const angle = baseAngle + ((item.openPanels || []).includes(index) ? (index < count / 2 ? -7 : 7) : 0);
         blade.style.setProperty("--fan-angle", angle + "deg");
         blade.style.transform = "rotate(" + angle + "deg)";
@@ -405,8 +431,9 @@
       layout.append(glue);
       labels.forEach(function (label, index) {
         const strip = makeTemplatePanel(item, index, "fan2-strip fan2-strip-" + index, label);
-        strip.style.top = (index * (78 / count)) + "%";
-        strip.style.height = Math.min(23, 88 / count) + "%";
+        strip.style.top = (index * (100 / count)) + "%";
+        strip.style.height = (100 / count) + "%";
+        strip.style.width = (83 * (1 - index * 0.42 / count)) + "%";
         strip.style.zIndex = String(index + 1);
         if ((item.openPanels || []).includes(index)) strip.classList.add("is-expanded");
         layout.append(strip);
@@ -424,23 +451,24 @@
         if (index < count - 1) {
           const crease = document.createElement("span");
           crease.className = "construction-guide guide-fold leporello-crease";
-          crease.style.left = ((index + 1) * 100 / count) + "%";
+          crease.style.top = ((index + 1) * 100 / count) + "%";
           layout.append(crease);
         }
       });
       layout.append(makeToggle(item, "Leporello auf- oder zusammenfalten"));
       addConstructionGuide(layout, "guide-cut leporello-cut");
     } else if (item.type === "foldcross") {
-      const flapWidth = clamp(34 - (count - 4) * 2, 18, 34);
-      const flapHeight = clamp(28 - (count - 4) * 1.5, 16, 28);
+      // Square arms on a 3x3 grid: center and each arm take one third.
+      const flapWidth = clamp(33.33 - (count - 4) * 2, 18, 33.33);
+      const flapHeight = flapWidth;
       labels.forEach(function (label, index) {
         const flap = makeTemplatePanel(item, index, "cross-flap cross-flap-" + index, label);
         const angle = -90 + index * 360 / count;
         const radians = angle * Math.PI / 180;
         flap.style.width = flapWidth + "%";
         flap.style.height = flapHeight + "%";
-        flap.style.left = (50 + 37 * Math.cos(radians) - flapWidth / 2) + "%";
-        flap.style.top = (50 + 37 * Math.sin(radians) - flapHeight / 2) + "%";
+        flap.style.left = (50 + flapWidth * Math.cos(radians) - flapWidth / 2) + "%";
+        flap.style.top = (50 + flapWidth * Math.sin(radians) - flapHeight / 2) + "%";
         flap.style.setProperty("--base-rotation", (angle + 90) + "deg");
         flap.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(flap);
