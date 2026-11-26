@@ -29,7 +29,7 @@
     flap: { type: "flap", w: 190, h: 150, text: "Hier öffnen", secondary: "Deine geheime Info steht hier.", bg: "#e7dafa", color: "#63517e" },
     accordion: { type: "accordion", w: 255, h: 105, text: "Teil 1", secondary: "Teil 2|Teil 3", bg: "#e8def8", color: "#63517f" },
     booklet: { type: "booklet", w: 155, h: 180, text: "Mini-Buch", secondary: "Dein Wissen auf mehreren Seiten.", bg: "#d9cdf2", color: "#5f4b87" },
-    pocket: { type: "pocket", w: 190, h: 135, text: "Wissens-Tasche", secondary: "Zieh mich heraus!", bg: "#e6dafa", color: "#62517f" },
+    pocket: { type: "pocket", w: 190, h: 150, text: "Wissens-Tasche", secondary: "Karte 1", bg: "#e6dafa", color: "#62517f" },
     wheel: { type: "wheel", w: 200, h: 200, text: "Drehen", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e7dcf8", color: "#7055a4" },
     tab: { type: "tab", w: 125, h: 48, text: "KAPITEL 1", secondary: "", bg: "#d8ccf4", color: "#65518d" },
     note: { type: "note", w: 180, h: 120, text: "Schreibe hier deine Notiz.", secondary: "", bg: "#fff3cf", color: "#725a32" },
@@ -39,7 +39,6 @@
     hexagon: { type: "hexagon", w: 160, h: 125, text: "Sechseck", secondary: "", bg: "#d5e9df", color: "#4f7560" },
     banner: { type: "banner", w: 270, h: 75, text: "Mein Thema", secondary: "", bg: "#f3cddd", color: "#87536e" },
     flower: { type: "flower", w: 220, h: 220, text: "Blütenmitte", secondary: "Blatt 1|Blatt 2|Blatt 3|Blatt 4|Blatt 5", bg: "#f4d7e5", color: "#80516b" },
-    pocket4: { type: "pocket4", w: 250, h: 260, text: "Meine Tasche", secondary: "Karte 1|Karte 2|Karte 3|Karte 4", bg: "#e8def8", color: "#62517f" },
     fan1: { type: "fan1", w: 250, h: 185, text: "Fächer", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e8def8", color: "#62517f" },
     fan2: { type: "fan2", w: 250, h: 210, text: "Fächer 2", secondary: "Teil 1|Teil 2|Teil 3|Teil 4", bg: "#e8def8", color: "#62517f" },
     leporello: { type: "leporello", w: 200, h: 320, text: "Leporello", secondary: "Seite 1|Seite 2|Seite 3|Seite 4", bg: "#e5dafa", color: "#5f4b87" },
@@ -51,20 +50,30 @@
   };
 
   const catalogTypes = new Set([
-    "wheel", "flower", "pocket4", "fan1", "fan2", "leporello", "foldcross",
+    "wheel", "flower", "pocket", "fan1", "fan2", "leporello", "foldcross",
     "foldsheet", "hexfold", "flipflap", "foldheart"
   ]);
   const multiPartCounts = {
-    accordion: 2, wheel: 4, flower: 5, pocket4: 4,
+    accordion: 2, wheel: 4, flower: 5, pocket: 1,
     fan1: 4, fan2: 4, leporello: 4, foldcross: 4, foldsheet: 3,
     hexfold: 2, flipflap: 5, foldheart: 4
   };
-  const minPartCounts = { flower: 3, wheel: 2, pocket4: 2, fan1: 2, fan2: 2, leporello: 2, foldcross: 2, foldsheet: 2, flipflap: 2, foldheart: 2 };
+  const minPartCounts = { flower: 3, wheel: 2, pocket: 1, fan1: 2, fan2: 2, leporello: 2, foldcross: 2, foldsheet: 2, flipflap: 2, foldheart: 2 };
 
   let project = loadProject();
+  let pocketView = null; // { id, index, returnFocus } while the card popup is open
   let zoom = 1;
   let drag = null;
   let toastTimer = null;
+
+  // Old saved pocket4 elements become pocket elements; their cards are kept as parts.
+  function migrateType(type) {
+    return type === "pocket4" ? "pocket" : type;
+  }
+
+  function maxPartsFor(type) {
+    return type === "pocket" ? 10 : MAX_PARTS;
+  }
 
   function uid() {
     return "el-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
@@ -80,15 +89,16 @@
     });
   }
 
-  function normalizeElement(item, regenerateId) {
+  function normalizeElement(source, regenerateId) {
+    const item = Object.assign({}, source, { type: migrateType(source.type) });
     const base = templates[item.type];
     const secondary = String(item.secondary == null ? base.secondary : item.secondary).slice(0, 500);
-    const legacyParts = secondary.split("|").map(function (value) { return value.trim(); }).slice(0, MAX_PARTS);
+    const legacyParts = secondary.split("|").map(function (value) { return value.trim(); }).slice(0, maxPartsFor(item.type));
     let parts = null;
 
     if (multiPartCounts[item.type]) {
       const sourceParts = Array.isArray(item.parts) ? item.parts : legacyParts;
-      parts = sourceParts.map(function (part) { return String(part).slice(0, 500); }).slice(0, MAX_PARTS);
+      parts = sourceParts.map(function (part) { return String(part).slice(0, 500); }).slice(0, maxPartsFor(item.type));
       if (!parts.length) parts = legacyParts.slice();
     }
 
@@ -132,7 +142,7 @@
 
       const usedIds = new Set();
       const elements = parsed.elements
-        .filter(function (item) { return item && Object.hasOwn(templates, item.type) && typeof item.id === "string" && item.id; })
+        .filter(function (item) { return item && Object.hasOwn(templates, migrateType(item.type)) && typeof item.id === "string" && item.id; })
         .map(function (item) {
           const normalized = normalizeElement(item, false);
           if (usedIds.has(normalized.id)) normalized.id = uid();
@@ -195,7 +205,7 @@
       flap: "Klappe", accordion: "Akkordeon", booklet: "Mini-Buch", pocket: "Tasche",
       wheel: "Drehscheibe", tab: "Reiter", note: "Notizkarte", circle: "Kreis",
       triangle: "Dreieck", star: "Stern", hexagon: "Sechseck", banner: "Banner",
-      flower: "Blume", pocket4: "Kartentasche", fan1: "Fächer 1", fan2: "Fächer 2",
+      flower: "Blume", fan1: "Fächer 1", fan2: "Fächer 2",
       leporello: "Leporello", foldcross: "Faltkreuz", foldsheet: "Faltblatt", hexfold: "Falt-Sechseck",
       flipflap: "Flip-Flap", foldheart: "Faltherz"
     };
@@ -253,23 +263,24 @@
   }
 
   function renderPartFields(item) {
-    const parts = getPanelTexts(item, multiPartCounts[item.type] || 2).slice(0, MAX_PARTS);
+    const maxParts = maxPartsFor(item.type);
+    const parts = getPanelTexts(item, multiPartCounts[item.type] || 2).slice(0, maxParts);
     const partNames = {
       accordion: "Akkordeon-Teil", wheel: "Segment", flower: "Blütenblatt",
-      pocket4: "Karte", fan1: "Fächerblatt", fan2: "Fächerteil",
+      pocket: "Karte", fan1: "Fächerblatt", fan2: "Fächerteil",
       leporello: "Seite", foldcross: "Klappe", foldsheet: "Feld",
       hexfold: "Innenseite",
       flipflap: "Klappe", foldheart: "Herzblatt"
     };
     const partName = partNames[item.type] || "Teil";
-    let html = '<div class="parts-editor"><div class="parts-editor-heading"><strong>Einzelne Felder</strong><span>' + parts.length + ' / ' + MAX_PARTS + '</span></div>';
+    let html = '<div class="parts-editor"><div class="parts-editor-heading"><strong>Einzelne Felder</strong><span>' + parts.length + ' / ' + maxParts + '</span></div>';
     parts.forEach(function (part, index) {
       const label = partName + " " + (index + 1);
       html += '<div class="part-field-row"><label class="field"><span class="field-label">' + label + '</span><textarea data-part-index="' + index + '" aria-label="' + label + '" maxlength="500" rows="2">' + escapeHtml(part) + '</textarea></label>';
       html += '<button type="button" class="part-remove" data-part-remove="' + index + '" aria-label="' + label + ' entfernen" title="Teil entfernen"' + (parts.length <= (minPartCounts[item.type] || 1) ? ' disabled' : '') + '>−</button></div>';
     });
-    html += '<button type="button" class="part-add" data-part-add' + (parts.length >= MAX_PARTS ? ' disabled' : '') + '>＋ Teil hinzufügen</button>';
-    html += '<p class="field-help">Jeder Teil hat ein eigenes Textfeld. Du kannst bis zu ' + MAX_PARTS + ' Teile verwenden.</p></div>';
+    html += '<button type="button" class="part-add" data-part-add' + (parts.length >= maxParts ? ' disabled' : '') + '>＋ Teil hinzufügen</button>';
+    html += '<p class="field-help">Jeder Teil hat ein eigenes Textfeld. Du kannst bis zu ' + maxParts + ' Teile verwenden.</p></div>';
     return html;
   }
 
@@ -402,35 +413,31 @@
       addConstructionGuide(layout, "guide-fold flower-fold flower-fold-a");
       addConstructionGuide(layout, "guide-fold flower-fold flower-fold-b");
       addConstructionGuide(layout, "guide-glue flower-glue");
-    } else if (item.type === "pocket4") {
-      const body = document.createElement("div");
-      body.className = "pocket4-body";
-      body.textContent = item.text;
-      body.style.backgroundColor = item.bg;
-      body.style.color = item.color;
-      const tabs = ["pocket4-tab-left", "pocket4-tab-right", "pocket4-tab-bottom"].map(function (name) {
+    } else if (item.type === "pocket") {
+      // The cards sit inside the pocket; only the top card peeks out. The popup shows all of them.
+      for (let layer = Math.min(count - 1, 3); layer >= 1; layer -= 1) {
+        const edge = document.createElement("span");
+        edge.className = "pocket-stack-edge";
+        edge.style.setProperty("--layer", String(layer));
+        layout.append(edge);
+      }
+      const top = makeLabel(labels[0], "pocket-card");
+      top.style.color = item.color;
+      const front = makeLabel(item.text, "pocket-front");
+      front.style.backgroundColor = item.bg;
+      front.style.color = item.color;
+      const tabs = ["pocket-tab-left", "pocket-tab-right"].map(function (name) {
         const tab = document.createElement("span");
-        tab.className = "pocket4-tab " + name;
+        tab.className = "pocket-tab " + name;
         return tab;
       });
-      layout.append(...tabs, body);
-      // Cards sit in a grid below the pocket, two per row, like the template sheet.
-      const cols = count <= 2 ? count : 2;
-      const rows = Math.ceil(count / cols);
-      const cellHeight = 33 / rows;
-      labels.forEach(function (label, index) {
-        const card = makeTemplatePanel(item, index, "pocket4-card pocket4-card-" + index, label);
-        const col = index % cols;
-        const row = Math.floor(index / cols);
-        card.style.left = (6 + col * 47) + "%";
-        card.style.top = (66 + row * cellHeight) + "%";
-        card.style.width = "41%";
-        card.style.height = (cellHeight * 0.88) + "%";
-        layout.append(card);
-      });
-      addConstructionGuide(layout, "guide-cut pocket4-cut");
-      addConstructionGuide(layout, "guide-fold pocket4-fold");
-      addConstructionGuide(layout, "guide-glue pocket4-glue");
+      const badge = document.createElement("span");
+      badge.className = "pocket-count";
+      badge.textContent = count + (count === 1 ? " Karte" : " Karten");
+      layout.append(top, ...tabs, front, badge, makeToggle(item, "Tasche öffnen und Karten ansehen"));
+      addConstructionGuide(layout, "guide-cut pocket-cut");
+      addConstructionGuide(layout, "guide-fold pocket-fold");
+      addConstructionGuide(layout, "guide-glue pocket-glue");
     } else if (item.type === "fan1") {
       labels.forEach(function (label, index) {
         const blade = makeTemplatePanel(item, index, "fan1-blade fan1-blade-" + index, label);
@@ -610,7 +617,7 @@
     node.style.zIndex = String(3 + project.elements.indexOf(item));
     node.style.color = item.color;
 
-    if (catalogTypes.has(item.type) || ["flap", "booklet", "pocket", "accordion"].includes(item.type)) {
+    if (catalogTypes.has(item.type) || ["flap", "booklet", "accordion"].includes(item.type)) {
       node.style.background = "transparent";
     } else {
       node.style.backgroundColor = item.bg;
@@ -647,13 +654,6 @@
       cover.style.backgroundColor = item.bg;
       cover.style.color = item.color;
       node.append(inside, cover, makeToggle(item, item.open ? "Buch schließen" : "Buch öffnen"));
-    } else if (item.type === "pocket") {
-      const card = makeLabel(item.secondary, "pocket-card");
-      const front = makeLabel(item.text, "pocket-front");
-      card.style.color = item.color;
-      front.style.backgroundColor = item.bg;
-      front.style.color = item.color;
-      node.append(card, front, makeToggle(item, item.open ? "Karte zurückstecken" : "Karte herausziehen"));
     } else if (item.type === "wheel") {
       const face = document.createElement("div");
       face.className = "wheel-face";
@@ -666,7 +666,7 @@
     } else {
       node.append(makeLabel(item.text));
     }
-    if (!catalogTypes.has(item.type) && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet" && item.type !== "pocket") {
+    if (!catalogTypes.has(item.type) && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet") {
       node.style.backgroundColor = item.bg;
     }
     if (project.selectedId === item.id) node.classList.add("selected");
@@ -745,15 +745,14 @@
     const selectedIndex = project.elements.indexOf(item);
     const primaryLabels = {
       accordion: "Erstes Feld", wheel: "Text in der Mitte", flower: "Text in der Mitte",
-      pocket4: "Beschriftung der Tasche", fan1: "Titel", fan2: "Titel",
+      pocket: "Beschriftung der Tasche", fan1: "Titel", fan2: "Titel",
       leporello: "Titel", foldcross: "Text in der Mitte", foldsheet: "Titel",
       hexfold: "Text auf der Oberseite",
       flipflap: "Text auf der Rückseite", foldheart: "Text in der Mitte"
     };
     const secondaryLabels = {
       flap: "Text auf der Innenseite",
-      booklet: "Inhalt im Mini-Buch",
-      pocket: "Text auf der herausziehbaren Karte"
+      booklet: "Inhalt im Mini-Buch"
     };
 
     let html = '<section class="inspector-group"><div class="group-heading"><h3>Inhalt</h3><span class="element-kind">' + typeName(item.type) + '</span></div>';
@@ -792,7 +791,7 @@
     const item = getSelected();
     if (!item || (!add && !remove)) return;
     syncParts(item);
-    if (add && item.parts.length < MAX_PARTS) {
+    if (add && item.parts.length < maxPartsFor(item.type)) {
       item.parts.push("Neues Teil " + (item.parts.length + 1));
       if (item.type === "flower" && item.centerSidesAuto !== false) item.centerSides = item.parts.length;
     } else if (remove && Number.isInteger(Number(remove.dataset.partRemove)) && Number(remove.dataset.partRemove) >= 0 && Number(remove.dataset.partRemove) < item.parts.length && item.parts.length > (minPartCounts[item.type] || 1)) {
@@ -907,7 +906,7 @@
       rotation: 0,
       open: false,
       openPanels: [],
-      parts: (multiPartCounts[type] ? String(template.secondary || "").split("|").map(function (part) { return part.trim(); }).slice(0, MAX_PARTS) : []),
+      parts: (multiPartCounts[type] ? String(template.secondary || "").split("|").map(function (part) { return part.trim(); }).slice(0, maxPartsFor(type)) : []),
       centerSides: type === "flower" ? String(template.secondary || "").split("|").length : 5,
       centerSidesAuto: true
     });
@@ -980,6 +979,60 @@
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  // Card popup for pocket elements: flip through the cards with arrows or the keyboard.
+  const pocketModal = document.getElementById("pocket-modal");
+  const pocketModalTitle = document.getElementById("pocket-modal-title");
+  const pocketModalCard = document.getElementById("pocket-modal-card");
+  const pocketModalCount = document.getElementById("pocket-modal-count");
+  const pocketPrev = document.getElementById("pocket-prev");
+  const pocketNext = document.getElementById("pocket-next");
+  const pocketClose = document.getElementById("pocket-modal-close");
+
+  function renderPocketView() {
+    const item = project.elements.find(function (entry) { return entry.id === pocketView.id; });
+    if (!item) {
+      closePocket();
+      return;
+    }
+    const cards = getPanelTexts(item, 1);
+    pocketView.index = clamp(pocketView.index, 0, cards.length - 1);
+    pocketModalTitle.textContent = item.text;
+    pocketModalCard.textContent = cards[pocketView.index];
+    pocketModalCard.style.backgroundColor = item.bg;
+    pocketModalCard.style.color = item.color;
+    pocketModalCount.textContent = (pocketView.index + 1) + " / " + cards.length;
+    pocketPrev.disabled = pocketView.index === 0;
+    pocketNext.disabled = pocketView.index === cards.length - 1;
+  }
+
+  function openPocket(id) {
+    pocketView = { id: id, index: 0, returnFocus: document.activeElement };
+    renderPocketView();
+    pocketModal.hidden = false;
+    pocketClose.focus();
+  }
+
+  function closePocket() {
+    if (!pocketView) return;
+    const returnFocus = pocketView.returnFocus;
+    pocketView = null;
+    pocketModal.hidden = true;
+    if (returnFocus && typeof returnFocus.focus === "function") returnFocus.focus();
+  }
+
+  function stepPocket(delta) {
+    if (!pocketView) return;
+    pocketView.index += delta;
+    renderPocketView();
+  }
+
+  pocketPrev.addEventListener("click", function () { stepPocket(-1); });
+  pocketNext.addEventListener("click", function () { stepPocket(1); });
+  pocketClose.addEventListener("click", closePocket);
+  pocketModal.addEventListener("click", function (event) {
+    if (event.target === pocketModal) closePocket();
+  });
+
   document.querySelectorAll("[data-add]").forEach(function (button) {
     button.addEventListener("click", function () { addElement(button.dataset.add); });
   });
@@ -1051,6 +1104,10 @@
       const item = project.elements.find(function (entry) { return entry.id === node.dataset.id; });
       if (!item) return;
       selectElement(item.id);
+      if (item.type === "pocket") {
+        openPocket(item.id);
+        return;
+      }
       if (item.type === "wheel") item.rotation = (item.rotation + 360 / Math.max(2, getPanelTexts(item).length)) % 360;
       else item.open = !item.open;
       renderStage();
@@ -1134,7 +1191,7 @@
         if (!parsed || !Array.isArray(parsed.elements)) throw new Error("Ungültige Lapbook-Datei");
         if (parsed.elements.length > 500) throw new Error("Die Datei enthält mehr als 500 Elemente.");
         const next = { title: String(parsed.title || "Importiertes Lapbook").slice(0, 60), paper: parsed.paper, guides: parsed.guides !== false, elements: parsed.elements, selectedId: null };
-        const valid = next.elements.every(function (item) { return item && typeof item === "object" && Object.hasOwn(templates, item.type); });
+        const valid = next.elements.every(function (item) { return item && typeof item === "object" && Object.hasOwn(templates, migrateType(item.type)); });
         if (!valid) throw new Error("Die Datei enthält unbekannte Elemente.");
 
         const hasCurrentProject = project.elements.length > 0 || project.title !== defaults.title || project.paper !== defaults.paper || project.guides !== defaults.guides;
@@ -1175,6 +1232,13 @@
   document.getElementById("zoom-fit").addEventListener("click", function () { zoom = 1; applyZoom(); });
 
   document.addEventListener("keydown", function (event) {
+    if (pocketView) {
+      // While the card popup is open, keys only flip or close it; nothing gets deleted.
+      if (event.key === "Escape") closePocket();
+      else if (event.key === "ArrowLeft") stepPocket(-1);
+      else if (event.key === "ArrowRight") stepPocket(1);
+      return;
+    }
     const tag = event.target && event.target.tagName;
     const editing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || event.target.isContentEditable;
     if (!editing && (event.key === "Delete" || event.key === "Backspace")) {
