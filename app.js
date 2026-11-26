@@ -385,7 +385,19 @@
       center.style.height = "42%";
       center.style.backgroundColor = item.bg;
       center.style.borderColor = item.color;
-      center.style.clipPath = polygonClipPath(clamp(Number(item.centerSides) || count, 3, 12));
+      const centerPolygon = polygonClipPath(clamp(Number(item.centerSides) || count, 3, 12));
+      // The clip-path cuts off borders, so the outline is a slightly larger shape behind the center.
+      const outline = document.createElement("div");
+      outline.className = "flower-center-outline";
+      outline.style.position = "absolute";
+      outline.style.left = "27%";
+      outline.style.top = "27%";
+      outline.style.width = "46%";
+      outline.style.height = "46%";
+      outline.style.backgroundColor = item.color;
+      outline.style.clipPath = centerPolygon;
+      layout.append(outline);
+      center.style.clipPath = centerPolygon;
       layout.append(center);
       addConstructionGuide(layout, "guide-fold flower-fold flower-fold-a");
       addConstructionGuide(layout, "guide-fold flower-fold flower-fold-b");
