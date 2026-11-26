@@ -1226,7 +1226,6 @@
     };
   }
 
-  document.getElementById("print-project").addEventListener("click", function () { window.print(); });
   document.getElementById("zoom-in").addEventListener("click", function () { zoom = clamp(zoom + 0.1, 0.6, 1.5); applyZoom(); });
   document.getElementById("zoom-out").addEventListener("click", function () { zoom = clamp(zoom - 0.1, 0.6, 1.5); applyZoom(); });
   document.getElementById("zoom-fit").addEventListener("click", function () { zoom = 1; applyZoom(); });

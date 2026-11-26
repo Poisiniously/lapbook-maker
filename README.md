@@ -11,7 +11,6 @@ A browser-based editor for designing digital lapbooks with interactive flaps, ac
 - Preview interactive flaps, booklets, pockets, accordions, and spinning wheels.
 - Automatically save the current project in the browser's local storage.
 - Export and import projects as JSON files.
-- Print the canvas or save it as a PDF using the browser's print dialog.
 
 ## GitHub Pages
 
@@ -27,4 +26,4 @@ Multi-part elements show a separate text field for every panel in the sidebar. U
 
 For single foldable elements, the front and inside/card text also have separate fields. The flower automatically matches its center polygon's number of corners to its petal count. Disable **Seitenzahl an Blütenblätter koppeln** to choose the number manually (3–12).
 
-All elements share the same controls for colors, width, height, X/Y position, rotation, duplication, deletion, and layer order. Dragging an element also updates its numeric position fields. Zoom affects the working view only; printing uses the full lapbook canvas and includes the construction guides.
+All elements share the same controls for colors, width, height, X/Y position, rotation, duplication, deletion, and layer order. Dragging an element also updates its numeric position fields. Zoom changes the view only.
