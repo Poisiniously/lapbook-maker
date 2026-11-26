@@ -694,6 +694,34 @@
     return '<label class="field"><span class="field-label">' + label + valueDisplay + '</span><input id="' + id + '" type="' + kind + '" value="' + escapeHtml(value) + '"' + bounds + '></label>';
   }
 
+  // Collapsible categories. The open/closed state is kept in memory only, not saved.
+  const collapsedSections = new Set();
+
+  function makeCollapsible(heading) {
+    const title = heading.textContent.trim();
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "section-toggle";
+    button.textContent = title;
+    const collapsed = collapsedSections.has(title);
+    button.setAttribute("aria-expanded", String(!collapsed));
+    heading.textContent = "";
+    heading.append(button);
+    heading.closest(".tool-section, .inspector-group").classList.toggle("is-collapsed", collapsed);
+  }
+
+  document.addEventListener("click", function (event) {
+    const toggle = event.target.closest(".section-toggle");
+    if (!toggle) return;
+    const title = toggle.textContent.trim();
+    const collapsed = toggle.closest(".tool-section, .inspector-group").classList.toggle("is-collapsed");
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    if (collapsed) collapsedSections.add(title);
+    else collapsedSections.delete(title);
+  });
+
+  document.querySelectorAll(".tool-section h2").forEach(makeCollapsible);
+
   function renderInspector() {
     const item = getSelected();
     if (!item) {
@@ -741,6 +769,7 @@
     html += '</section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Anordnen</h3></div><div class="layer-actions"><button type="button" class="small-action" data-inspector-action="duplicate">⧉ Duplizieren</button><button type="button" class="small-action" data-inspector-action="front"' + (selectedIndex >= project.elements.length - 1 ? ' disabled' : '') + '>Ebene hoch</button><button type="button" class="small-action" data-inspector-action="back"' + (selectedIndex <= 0 ? ' disabled' : '') + '>Ebene runter</button><button type="button" class="small-action delete-action" data-inspector-action="delete">Entfernen</button></div></section>';
     inspector.innerHTML = html;
+    inspector.querySelectorAll(".inspector-group .group-heading h3").forEach(makeCollapsible);
     bindInspector(item);
   }
 
