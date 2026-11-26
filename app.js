@@ -363,12 +363,13 @@
       const petalHeight = 30;
       labels.forEach(function (label, index) {
         const petal = makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label);
-        const angle = -90 + index * 360 / count;
+        // Petals point at the middle of an edge, not at a corner.
+        const angle = -90 + (index + 0.5) * 360 / count;
         const radians = angle * Math.PI / 180;
         // Distance from the center to the polygon edge in this direction.
         const offset = (((angle + 90) / step) % 1 - 0.5) * step * Math.PI / 180;
         const edgeDistance = apothem / Math.cos(offset);
-        const distance = edgeDistance + petalHeight / 2 - 1; // 1% overlap hides the seam
+        const distance = edgeDistance + petalHeight / 2 - 3; // overlap is hidden under the center
         petal.style.width = petalWidth + "%";
         petal.style.height = petalHeight + "%";
         petal.style.left = (50 + distance * Math.cos(radians) - petalWidth / 2) + "%";
