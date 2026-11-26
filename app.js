@@ -38,7 +38,7 @@
     star: { type: "star", w: 140, h: 140, text: "Stern", secondary: "", bg: "#ffe7ae", color: "#8c6d35" },
     hexagon: { type: "hexagon", w: 160, h: 125, text: "Sechseck", secondary: "", bg: "#d5e9df", color: "#4f7560" },
     banner: { type: "banner", w: 270, h: 75, text: "Mein Thema", secondary: "", bg: "#f3cddd", color: "#87536e" },
-    flower: { type: "flower", w: 230, h: 220, text: "Blütenmitte", secondary: "Blatt 1|Blatt 2|Blatt 3|Blatt 4|Blatt 5", bg: "#f4d7e5", color: "#80516b" },
+    flower: { type: "flower", w: 220, h: 220, text: "Blütenmitte", secondary: "Blatt 1|Blatt 2|Blatt 3|Blatt 4|Blatt 5", bg: "#f4d7e5", color: "#80516b" },
     pocket4: { type: "pocket4", w: 250, h: 260, text: "Meine Tasche", secondary: "Karte 1|Karte 2|Karte 3|Karte 4", bg: "#e8def8", color: "#62517f" },
     fan1: { type: "fan1", w: 250, h: 185, text: "Fächer", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e8def8", color: "#62517f" },
     fan2: { type: "fan2", w: 250, h: 210, text: "Fächer 2", secondary: "Teil 1|Teil 2|Teil 3|Teil 4", bg: "#e8def8", color: "#62517f" },
@@ -355,11 +355,12 @@
       addConstructionGuide(layout, "guide-cut guide-circle");
     } else if (item.type === "flower") {
       // Petals sit on the edges of the center polygon; the polygon has the same number of sides.
+      // The template is square, so % values in both directions match and the polygon stays regular.
       const sides = clamp(Number(item.centerSides) || count, 3, 12);
       const step = 360 / sides;
       const apothem = 20.6 * Math.cos(Math.PI / sides); // polygon radius is 49% of the 42% box
-      const petalWidth = clamp(2 * apothem * Math.tan(Math.PI / sides) * 0.9, 16, 34);
-      const petalHeight = clamp(36 - (count - 5) * 1.7, 24, 36);
+      const petalWidth = clamp(2 * apothem * Math.tan(Math.PI / sides) * 0.95, 16, 34);
+      const petalHeight = 30;
       labels.forEach(function (label, index) {
         const petal = makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label);
         const angle = -90 + index * 360 / count;
@@ -590,7 +591,8 @@
     node.style.left = (item.x / 10) + "%";
     node.style.top = (item.y / 7) + "%";
     node.style.width = (item.w / 10) + "%";
-    node.style.height = (item.h / 7) + "%";
+    // Flowers are always square: the height follows the width, also for older saved flowers.
+    node.style.height = ((item.type === "flower" ? item.w : item.h) / 7) + "%";
     node.style.transform = item.type === "wheel" ? "rotate(0deg)" : "rotate(" + item.rotation + "deg)";
     node.style.zIndex = String(3 + project.elements.indexOf(item));
     node.style.color = item.color;
