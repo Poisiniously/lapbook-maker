@@ -46,21 +46,20 @@
     foldcross: { type: "foldcross", w: 230, h: 230, text: "Mitte", secondary: "Oben|Rechts|Unten|Links", bg: "#e7dafa", color: "#63517e" },
     foldsheet: { type: "foldsheet", w: 180, h: 255, text: "Faltblatt", secondary: "Feld 1|Feld 2|Feld 3", bg: "#e9defa", color: "#5f4b87" },
     hexfold: { type: "hexfold", w: 200, h: 350, text: "Sechseck", secondary: "Innenseite", bg: "#d8e9df", color: "#4f7560" },
-    "leporello-figure": { type: "leporello-figure", w: 220, h: 380, text: "Meine Figur", secondary: "Kopf|Oberkörper|Mitte|Unterteil", bg: "#e8def8", color: "#62517f" },
     flipflap: { type: "flipflap", w: 275, h: 215, text: "Flip-Flap", secondary: "Klappe 1|Klappe 2|Klappe 3|Klappe 4|Klappe 5", bg: "#e7dafa", color: "#63517e" },
     foldheart: { type: "foldheart", w: 235, h: 220, text: "Faltherz", secondary: "Herz 1|Herz 2|Herz 3|Herz 4", bg: "#f4d7e5", color: "#80516b" }
   };
 
   const catalogTypes = new Set([
     "wheel", "flower", "pocket4", "fan1", "fan2", "leporello", "foldcross",
-    "foldsheet", "hexfold", "leporello-figure", "flipflap", "foldheart"
+    "foldsheet", "hexfold", "flipflap", "foldheart"
   ]);
   const multiPartCounts = {
     accordion: 2, wheel: 4, flower: 5, pocket4: 4,
     fan1: 4, fan2: 4, leporello: 4, foldcross: 4, foldsheet: 3,
-    hexfold: 2, "leporello-figure": 4, flipflap: 5, foldheart: 4
+    hexfold: 2, flipflap: 5, foldheart: 4
   };
-  const minPartCounts = { flower: 3, wheel: 2, pocket4: 2, fan1: 2, fan2: 2, leporello: 2, foldcross: 2, foldsheet: 2, "leporello-figure": 2, flipflap: 2, foldheart: 2 };
+  const minPartCounts = { flower: 3, wheel: 2, pocket4: 2, fan1: 2, fan2: 2, leporello: 2, foldcross: 2, foldsheet: 2, flipflap: 2, foldheart: 2 };
 
   let project = loadProject();
   let zoom = 1;
@@ -198,7 +197,7 @@
       triangle: "Dreieck", star: "Stern", hexagon: "Sechseck", banner: "Banner",
       flower: "Blume", pocket4: "Kartentasche", fan1: "Fächer 1", fan2: "Fächer 2",
       leporello: "Leporello", foldcross: "Faltkreuz", foldsheet: "Faltblatt", hexfold: "Falt-Sechseck",
-      "leporello-figure": "Leporello-Figur", flipflap: "Flip-Flap", foldheart: "Faltherz"
+      flipflap: "Flip-Flap", foldheart: "Faltherz"
     };
     return names[type] || "Element";
   }
@@ -259,7 +258,7 @@
       accordion: "Akkordeon-Teil", wheel: "Segment", flower: "Blütenblatt",
       pocket4: "Karte", fan1: "Fächerblatt", fan2: "Fächerteil",
       leporello: "Seite", foldcross: "Klappe", foldsheet: "Feld",
-      hexfold: "Innenseite", "leporello-figure": "Körperteil",
+      hexfold: "Innenseite",
       flipflap: "Klappe", foldheart: "Herzblatt"
     };
     const partName = partNames[item.type] || "Teil";
@@ -355,16 +354,24 @@
       addConstructionGuide(layout, "guide-fold wheel-pivot");
       addConstructionGuide(layout, "guide-cut guide-circle");
     } else if (item.type === "flower") {
-      const petalWidth = clamp(34 - (count - 5) * 2, 20, 34);
+      // Petals sit on the edges of the center polygon; the polygon has the same number of sides.
+      const sides = clamp(Number(item.centerSides) || count, 3, 12);
+      const step = 360 / sides;
+      const apothem = 20.6 * Math.cos(Math.PI / sides); // polygon radius is 49% of the 42% box
+      const petalWidth = clamp(2 * apothem * Math.tan(Math.PI / sides) * 0.9, 16, 34);
       const petalHeight = clamp(36 - (count - 5) * 1.7, 24, 36);
       labels.forEach(function (label, index) {
         const petal = makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label);
         const angle = -90 + index * 360 / count;
         const radians = angle * Math.PI / 180;
+        // Distance from the center to the polygon edge in this direction.
+        const offset = (((angle + 90) / step) % 1 - 0.5) * step * Math.PI / 180;
+        const edgeDistance = apothem / Math.cos(offset);
+        const distance = edgeDistance + petalHeight / 2 - 1; // 1% overlap hides the seam
         petal.style.width = petalWidth + "%";
         petal.style.height = petalHeight + "%";
-        petal.style.left = (50 + 31 * Math.cos(radians) - petalWidth / 2) + "%";
-        petal.style.top = (50 + 31 * Math.sin(radians) - petalHeight / 2) + "%";
+        petal.style.left = (50 + distance * Math.cos(radians) - petalWidth / 2) + "%";
+        petal.style.top = (50 + distance * Math.sin(radians) - petalHeight / 2) + "%";
         petal.style.setProperty("--base-rotation", (angle + 90) + "deg");
         petal.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(petal);
@@ -528,35 +535,6 @@
       layout.append(lower, upper, makeToggle(item, "Sechseck auf- oder zuklappen"));
       addConstructionGuide(layout, "guide-fold hexfold-crease");
       addConstructionGuide(layout, "guide-cut hexfold-cut");
-    } else if (item.type === "leporello-figure") {
-      const head = document.createElement("div");
-      head.className = "figure-head";
-      head.textContent = "●";
-      const arms = document.createElement("div");
-      arms.className = "figure-arms";
-      const body = document.createElement("div");
-      body.className = "figure-body";
-      labels.forEach(function (label, index) {
-        const panel = document.createElement("div");
-        panel.className = "figure-panel";
-        panel.textContent = label;
-        panel.style.height = (100 / count) + "%";
-        panel.style.backgroundColor = index % 2 ? "#f2eafa" : item.bg;
-        panel.style.color = item.color;
-        body.append(panel);
-        if (index < count - 1) {
-          const crease = document.createElement("span");
-          crease.className = "construction-guide guide-fold figure-crease";
-          crease.style.top = ((index + 1) * 100 / count) + "%";
-          body.append(crease);
-        }
-      });
-      const title = document.createElement("div");
-      title.className = "figure-title";
-      title.textContent = item.text;
-      layout.append(head, arms, title, body, makeToggle(item, "Figur-Leporello auffalten"));
-      addConstructionGuide(layout, "guide-cut figure-cut");
-      addConstructionGuide(layout, "guide-glue figure-glue");
     } else if (item.type === "flipflap") {
       const backing = document.createElement("div");
       backing.className = "flipflap-backing";
@@ -726,7 +704,7 @@
       accordion: "Erstes Feld", wheel: "Text in der Mitte", flower: "Text in der Mitte",
       pocket4: "Beschriftung der Tasche", fan1: "Titel", fan2: "Titel",
       leporello: "Titel", foldcross: "Text in der Mitte", foldsheet: "Titel",
-      hexfold: "Text auf der Oberseite", "leporello-figure": "Titel",
+      hexfold: "Text auf der Oberseite",
       flipflap: "Text auf der Rückseite", foldheart: "Text in der Mitte"
     };
     const secondaryLabels = {
