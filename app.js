@@ -803,6 +803,10 @@
     if (!catalogTypes.has(item.type) && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet" && item.type !== "tab") {
       node.style.backgroundColor = item.bg;
     }
+    // Hover hint on everything that reacts to a click.
+    node.querySelectorAll("[data-tap='toggle'], [data-action='panel-toggle']").forEach(function (target) {
+      if (!target.title) target.title = item.type === "pocket" ? "Klicken, um die Karten anzusehen" : "Klicken zum Auf- und Zuklappen";
+    });
     if (project.selectedId === item.id) node.classList.add("selected");
     return node;
   }
@@ -869,6 +873,121 @@
 
   document.querySelectorAll(".tool-section h2").forEach(makeCollapsible);
 
+  // Short craft guides shown in the info popup: what it is, how to build it, a tip.
+  const templateInfo = {
+    flap: {
+      what: "Eine Klappe versteckt Text oder Bilder unter einem Deckblatt, das sich nach oben aufklappen lässt.",
+      steps: ["Rechteck ausschneiden, an der oberen Kante einen Klebestreifen von ca. 1 cm lassen.", "Den Streifen falten und nur diesen Streifen aufkleben, nicht die ganze Klappe.", "Unter der Klappe den Text oder das Bild aufschreiben oder aufkleben."],
+      tip: "Beschrifte die Vorderseite mit einer Frage und verstecke die Antwort darunter."
+    },
+    accordion: {
+      what: "Ein Akkordeon wird wie eine Ziehharmonika zusammengefaltet und zeigt beim Aufziehen mehrere Felder nebeneinander.",
+      steps: ["Einen langen Papierstreifen in gleich breite Felder einteilen.", "Die Felder abwechselnd nach vorne und nach hinten falten (Zickzack).", "Das erste Feld auf das Lapbook kleben, die anderen bleiben frei beweglich."],
+      tip: "Mit Falzbein oder Lineal falzen, dann liegen die Felder sauber aufeinander."
+    },
+    booklet: {
+      what: "Das Mini-Buch ist ein kleines Heft mit Deckel, das sich wie ein Buch öffnen lässt.",
+      steps: ["Ein Blatt in der Mitte falten, sodass ein Deckel entsteht.", "Die Rückseite des Hefts auf das Lapbook kleben.", "Innen die Inhalte aufschreiben, auf den Deckel den Titel."],
+      tip: "Für mehr Seiten mehrere Blätter ineinanderlegen und in der Falz heften."
+    },
+    pocket: {
+      what: "Die Tasche nimmt Kärtchen auf, die man herausziehen und wieder zurückstecken kann.",
+      steps: ["Rechteck ausschneiden und das untere Drittel nach oben falten.", "Die Seitenränder (Klebelaschen) mit Kleber fixieren, oben bleibt die Tasche offen.", "Kärtchen in passender Größe ausschneiden und beschriften."],
+      tip: "Tippe auf die Tasche, um die Karten im Popup einzeln anzusehen."
+    },
+    wheel: {
+      what: "Die Drehscheibe zeigt durch ein Fenster immer nur einen Abschnitt, den man durch Drehen wechselt.",
+      steps: ["Zwei gleich große Kreise ausschneiden.", "Den oberen Kreis mit einem Fenster in Segmentgröße versehen (ein Viertel bei 4 Teilen).", "Beide in der Mitte mit einer Musterbeutelklammer verbinden und den unteren Kreis in Segmente einteilen."],
+      tip: "Die Beschriftung steht im unteren Kreis jeweils in der Mitte jedes Segments."
+    },
+    tab: {
+      what: "Ein Reiter ist ein kleiner Streifen, der aus dem Lapbook herausragt und Kapitel markiert.",
+      steps: ["Streifen mit abgerundeter Oberkante ausschneiden.", "Unten eine Klebelasche falten und auf die Rückseite des Lapbooks kleben.", "Den überstehenden Teil beschriften."],
+      tip: "Mehrere Reiter in unterschiedlichen Höhen kleben, damit alle sichtbar bleiben."
+    },
+    flower: {
+      what: "Die Blume hat ein Mittelteil und Blütenblätter, die über der Mitte zusammengeklappt werden.",
+      steps: ["Mittelteil und Blütenblätter in einem Stück ausschneiden.", "Jedes Blatt entlang der Kante zum Mittelteil falten.", "Das Mittelteil aufkleben, die Blätter bleiben frei und werden nach innen geklappt."],
+      tip: "Mit dem Pfeil unten rechts klappst du alle Blätter nacheinander auf."
+    },
+    fan1: {
+      what: "Der Fächer besteht aus mehreren Streifen, die an einem Ende drehbar befestigt sind.",
+      steps: ["Gleich lange Streifen mit abgerundeten Enden ausschneiden.", "Am unteren Ende ein Loch stanzen und alle Streifen mit einer Musterbeutelklammer verbinden.", "Jeden Streifen beschriften und auffächern."],
+      tip: "Klammer nicht zu fest anziehen, sonst lassen sich die Streifen schlecht drehen."
+    },
+    fan2: {
+      what: "Beim Treppenfächer liegen die Streifen versetzt übereinander, jeder zeigt einen eigenen Text.",
+      steps: ["Streifen in abgestuften Längen schneiden.", "Die Streifen mit einem gemeinsamen Klebestreifen links übereinanderkleben.", "Jeden Streifen am Ende beschriften."],
+      tip: "Der kürzeste Streifen kommt nach unten, so sind alle Beschriftungen sichtbar."
+    },
+    leporello: {
+      what: "Ein Leporello ist ein Streifen, der im Zickzack gefaltet wird und sich wie ein Faltbuch aufklappen lässt.",
+      steps: ["Langen Streifen in gleich große Seiten einteilen.", "Abwechselnd nach vorne und hinten falten.", "Die erste Seite auf das Lapbook kleben."],
+      tip: "Gut geeignet für Abläufe und Zeitleisten."
+    },
+    foldcross: {
+      what: "Das Faltkreuz hat vier Klappen, die über der Mitte zusammentreffen und wie ein Briefumschlag schließen.",
+      steps: ["Ein Quadrat ausschneiden und in neun gleiche Felder einteilen.", "Die vier Eckfelder wegschneiden, sodass ein Kreuz entsteht.", "Die Arme zur Mitte falten und die Mitte aufkleben."],
+      tip: "Innen steht der Text, außen kann ein Titel auf die Klappen."
+    },
+    foldsheet: {
+      what: "Das Faltblatt wird wie ein Brief gefaltet (Wickelfalz) oder als Zickzack mit mehreren Feldern.",
+      steps: ["Blatt in gleich große Felder einteilen.", "Bei drei Feldern die Außenfelder nach innen falten, sonst im Zickzack falten.", "Auf das Lapbook kleben und beschriften."],
+      tip: "Die Außenseiten kannst du als Deckblatt gestalten."
+    },
+    hexfold: {
+      what: "Das Falt-Sechseck besteht aus zwei Hälften, die sich wie ein Buch öffnen und eine verborgene Fläche zeigen.",
+      steps: ["Zwei gleiche Sechsecke ausschneiden.", "Das obere Sechseck an einer Kante mit dem unteren verkleben.", "Innen beschriften, außen den Titel notieren."],
+      tip: "Ein Sechseck lässt sich leichter zeichnen, wenn du einen Kreis in sechs Teile teilst."
+    },
+    flipflap: {
+      what: "Beim Flip-Flap hat jede Karte zwei Seiten und lässt sich umklappen, um die Rückseite zu zeigen.",
+      steps: ["Karten gleich groß ausschneiden.", "Jede Karte an der Außenkante mit einer Klebelasche am Lapbook befestigen.", "Vorderseite und Rückseite beschriften."],
+      tip: "Klappe die Karten nacheinander um, um Frage und Antwort zu trennen."
+    },
+    foldheart: {
+      what: "Das Faltherz hat zwei Klappen, die sich in der Mitte treffen und ein Herz bilden.",
+      steps: ["Ein Herz ausschneiden und mittig falten.", "Die beiden Hälften wie Türen öffnen und schließen.", "Innen schreiben, außen gestalten."],
+      tip: "Zuerst eine halbe Herzform auf gefaltetes Papier zeichnen, dann ist es symmetrisch."
+    },
+    note: { what: "Eine Notizkarte für kurze Texte.", steps: ["Karte ausschneiden.", "Beschriften.", "Aufkleben."], tip: "Stichworte statt ganzer Sätze passen besser auf kleine Karten." },
+    circle: { what: "Ein Kreis als Schmuck oder Textfeld.", steps: ["Mit einem Zirkel oder einer Schablone aufzeichnen.", "Ausschneiden.", "Aufkleben."], tip: "Ein Glas als Schablone funktioniert gut." },
+    triangle: { what: "Ein Dreieck als Schmuck oder Textfeld.", steps: ["Mit dem Geodreieck aufzeichnen.", "Ausschneiden.", "Aufkleben."], tip: "Gleichseitige Dreiecke wirken besonders ordentlich." },
+    star: { what: "Ein Stern als Schmuck oder Textfeld.", steps: ["Schablone aufzeichnen.", "Ausschneiden.", "Aufkleben."], tip: "Falte das Papier vor dem Schneiden, so wird der Stern gleichmäßig." },
+    hexagon: { what: "Ein Sechseck als Schmuck oder Textfeld.", steps: ["Kreis in sechs Teile teilen und verbinden.", "Ausschneiden.", "Aufkleben."], tip: "Sechsecke lassen sich lückenlos aneinanderlegen." },
+    banner: { what: "Ein Banner für Titel und Überschriften.", steps: ["Streifen ausschneiden.", "Die Enden dreieckig einschneiden.", "Titel aufschreiben und aufkleben."], tip: "Große Schrift und kurze Titel wirken am besten." }
+  };
+
+  const infoModal = document.getElementById("info-modal");
+  const infoBody = document.getElementById("info-modal-body");
+  const infoTitle = document.getElementById("info-modal-title");
+  let infoReturnFocus = null;
+
+  function openInfo(type) {
+    const info = templateInfo[type];
+    if (!info) return;
+    infoTitle.textContent = typeName(type);
+    infoBody.innerHTML = '<p>' + escapeHtml(info.what) + '</p><h3>So bastelst du es</h3><ol>' +
+      info.steps.map(function (step) { return '<li>' + escapeHtml(step) + '</li>'; }).join("") +
+      '</ol><p class="info-tip"><strong>Tipp:</strong> ' + escapeHtml(info.tip) + '</p>';
+    infoReturnFocus = document.activeElement;
+    infoModal.hidden = false;
+    document.getElementById("info-modal-close").focus();
+  }
+
+  function closeInfo() {
+    infoModal.hidden = true;
+    if (infoReturnFocus && typeof infoReturnFocus.focus === "function") infoReturnFocus.focus();
+    infoReturnFocus = null;
+  }
+
+  document.getElementById("info-modal-close").addEventListener("click", closeInfo);
+  infoModal.addEventListener("click", function (event) { if (event.target === infoModal) closeInfo(); });
+  inspector.addEventListener("click", function (event) {
+    const button = event.target.closest("[data-info-type]");
+    if (button) openInfo(button.dataset.infoType);
+  });
+
   function renderInspector() {
     const item = getSelected();
     if (!item) {
@@ -889,7 +1008,7 @@
       booklet: "Inhalt im Mini-Buch"
     };
 
-    let html = '<section class="inspector-group"><div class="group-heading"><h3>Inhalt</h3><span class="element-kind">' + typeName(item.type) + '</span></div>';
+    let html = '<section class="inspector-group"><div class="group-heading"><h3>Inhalt</h3><span class="element-kind">' + typeName(item.type) + '</span>' + (templateInfo[item.type] ? '<button type="button" class="info-button" data-info-type="' + item.type + '" aria-label="Info und Bastelanleitung" title="Info und Bastelanleitung">ⓘ</button>' : '') + '</div>';
     html += fieldMarkup(primaryLabels[item.type] || "Text", "element-text", item.text, { kind: "textarea", maxLength: 500 });
 
     if (secondaryLabels[item.type]) {
@@ -1442,6 +1561,10 @@
   document.getElementById("zoom-fit").addEventListener("click", function () { zoom = 1; applyZoom(); });
 
   document.addEventListener("keydown", function (event) {
+    if (!infoModal.hidden) {
+      if (event.key === "Escape") closeInfo();
+      return;
+    }
     if (pocketView) {
       // While the card popup is open, keys only flip or close it; nothing gets deleted.
       if (event.key === "Escape") closePocket();

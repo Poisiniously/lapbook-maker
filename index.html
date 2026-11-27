@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#f7f4ff">
   <meta name="description" content="Gestalte digitale Lapbooks mit Klappen, Faltbüchern, Taschen, Drehscheiben und vielen Papierformen.">
   <title>Lapbook Maker</title>
-  <link rel="stylesheet" href="styles.css?v=folds-5">
-  <script src="app.js?v=folds-5" defer></script>
+  <link rel="stylesheet" href="styles.css?v=folds-6">
+  <script src="app.js?v=folds-6" defer></script>
 </head>
 <body>
   <script>
@@ -157,6 +157,15 @@
         <button type="button" class="pocket-modal-nav" id="pocket-next" aria-label="Nächste Karte">›</button>
       </div>
       <p class="pocket-modal-count" id="pocket-modal-count" aria-live="polite"></p>
+    </div>
+  </div>
+  <div class="pocket-modal" id="info-modal" hidden>
+    <div class="pocket-modal-dialog info-dialog" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+      <header class="pocket-modal-head">
+        <h2 id="info-modal-title">Info</h2>
+        <button type="button" class="pocket-modal-close" id="info-modal-close" aria-label="Schließen">×</button>
+      </header>
+      <div class="info-body" id="info-modal-body"></div>
     </div>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
