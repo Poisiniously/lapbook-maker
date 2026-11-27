@@ -308,6 +308,32 @@
     return panel;
   }
 
+  // Concertina fold (Leporello): closed, the pages lie stacked behind the first one;
+  // open, they unfold one after another along the creases.
+  function renderConcertina(layout, item, labels, prefix, toggleLabel) {
+    const count = labels.length;
+    labels.forEach(function (label, index) {
+      const panel = document.createElement("div");
+      panel.className = "concertina-panel " + prefix + "-panel";
+      panel.textContent = label;
+      panel.dataset.tap = "toggle";
+      panel.style.setProperty("--i", String(index));
+      panel.style.setProperty("--n", String(count));
+      panel.style.zIndex = String(count - index);
+      panel.style.backgroundColor = index % 2 ? "#f3e8f3" : item.bg;
+      panel.style.color = item.color;
+      layout.append(panel);
+      if (index < count - 1) {
+        const crease = document.createElement("span");
+        crease.className = "construction-guide guide-fold concertina-crease " + prefix + "-crease";
+        crease.style.top = ((index + 1) * 100 / count) + "%";
+        layout.append(crease);
+      }
+    });
+    layout.append(makeToggle(item, toggleLabel));
+    addConstructionGuide(layout, "guide-cut concertina-cut " + prefix + "-cut");
+  }
+
   function renderCatalogElement(item, node) {
     const layout = document.createElement("div");
     layout.className = "catalog-layout " + item.type + "-layout" + (item.open ? " is-open" : "");
@@ -473,22 +499,7 @@
       addConstructionGuide(layout, "guide-fold fan2-fold");
       addConstructionGuide(layout, "guide-glue fan2-glue-guide");
     } else if (item.type === "leporello") {
-      labels.forEach(function (label, index) {
-        const panel = document.createElement("div");
-        panel.className = "leporello-panel";
-        panel.textContent = label;
-        panel.style.backgroundColor = index % 2 ? "#f3e8f3" : item.bg;
-        panel.style.color = item.color;
-        layout.append(panel);
-        if (index < count - 1) {
-          const crease = document.createElement("span");
-          crease.className = "construction-guide guide-fold leporello-crease";
-          crease.style.top = ((index + 1) * 100 / count) + "%";
-          layout.append(crease);
-        }
-      });
-      layout.append(makeToggle(item, "Leporello auf- oder zusammenfalten"));
-      addConstructionGuide(layout, "guide-cut leporello-cut");
+      renderConcertina(layout, item, labels, "leporello", "Leporello auf- oder zusammenfalten");
     } else if (item.type === "foldcross") {
       // Square arms on a 3x3 grid: center and each arm take one third.
       const flapWidth = clamp(33.33 - (count - 4) * 2, 18, 33.33);
@@ -514,24 +525,42 @@
       addConstructionGuide(layout, "guide-fold cross-fold-v");
       addConstructionGuide(layout, "guide-fold cross-fold-h");
     } else if (item.type === "foldsheet") {
-      labels.forEach(function (label, index) {
-        const panel = document.createElement("div");
-        panel.className = "foldsheet-panel foldsheet-panel-" + index;
-        panel.textContent = label;
-        panel.style.top = (index * (100 / count)) + "%";
-        panel.style.height = (100 / count) + "%";
-        panel.style.backgroundColor = index % 2 ? "#f4eafa" : item.bg;
-        panel.style.color = item.color;
-        layout.append(panel);
-        if (index < count - 1) {
+      if (count !== 3) {
+        renderConcertina(layout, item, labels, "foldsheet", "Faltblatt auf- oder zusammenfalten");
+      } else {
+        // Letter fold: the top third folds down and the bottom third folds up over the middle.
+        layout.classList.add("is-letter");
+        labels.forEach(function (label, index) {
+          const panel = document.createElement("div");
+          panel.className = "letter-panel letter-panel-" + index;
+          panel.style.top = (index * 100 / 3) + "%";
+          panel.dataset.tap = "toggle";
+          const face = document.createElement("div");
+          face.className = "letter-face";
+          face.textContent = label;
+          face.style.backgroundColor = index % 2 ? "#f4eafa" : item.bg;
+          face.style.color = item.color;
+          panel.append(face);
+          if (index !== 1) {
+            // Outside of the folded sheet: the top flap carries the title.
+            const back = document.createElement("div");
+            back.className = "letter-back";
+            back.textContent = index === 0 ? item.text : "";
+            back.style.backgroundColor = item.bg;
+            back.style.color = item.color;
+            panel.append(back);
+          }
+          layout.append(panel);
+        });
+        [1, 2].forEach(function (line) {
           const crease = document.createElement("span");
-          crease.className = "construction-guide guide-fold foldsheet-crease";
-          crease.style.top = ((index + 1) * 100 / count) + "%";
+          crease.className = "construction-guide guide-fold concertina-crease foldsheet-crease";
+          crease.style.top = (line * 100 / 3) + "%";
           layout.append(crease);
-        }
-      });
-      layout.append(makeToggle(item, "Faltblatt auf- oder zusammenfalten"));
-      addConstructionGuide(layout, "guide-cut foldsheet-cut");
+        });
+        layout.append(makeToggle(item, "Faltblatt auf- oder zusammenfalten"));
+        addConstructionGuide(layout, "guide-cut concertina-cut foldsheet-cut");
+      }
     } else if (item.type === "hexfold") {
       const lower = document.createElement("div");
       lower.className = "hexfold-part hexfold-lower";
@@ -544,18 +573,23 @@
         part.style.flex = "1 1 " + (100 / count) + "%";
         lower.append(part);
       });
+      // The top hexagon folds down onto the lower one: its inside faces up when open,
+      // its outside (the title) faces up when closed.
       const upper = document.createElement("div");
-      upper.className = "hexfold-part hexfold-upper";
-      // Front shows the title; the back, visible when folded, shows the inside label.
-      const upperFront = document.createElement("span");
-      upperFront.className = "hexfold-label-front";
-      upperFront.textContent = item.text;
-      const upperBack = document.createElement("span");
-      upperBack.className = "hexfold-label-back";
-      upperBack.textContent = labels[0] || "Innenseite";
-      upper.append(upperFront, upperBack);
-      upper.style.backgroundColor = item.bg;
-      upper.style.color = item.color;
+      upper.className = "hexfold-upper";
+      upper.dataset.tap = "toggle";
+      [["hex-face-front", labels[0] || "Innenseite"], ["hex-face-back", item.text]].forEach(function (entry) {
+        const face = document.createElement("div");
+        face.className = "hex-face " + entry[0];
+        face.style.setProperty("--outline", item.color);
+        const fill = document.createElement("span");
+        fill.className = "hex-fill";
+        fill.textContent = entry[1];
+        fill.style.backgroundColor = item.bg;
+        fill.style.color = item.color;
+        face.append(fill);
+        upper.append(face);
+      });
       layout.append(lower, upper, makeToggle(item, "Sechseck auf- oder zuklappen"));
       addConstructionGuide(layout, "guide-fold hexfold-crease");
       addConstructionGuide(layout, "guide-cut hexfold-cut");
@@ -678,6 +712,10 @@
       panels.className = "accordion-panels";
       parts.forEach(function (part, index) {
         const panel = makeLabel(part, "accordion-panel");
+        panel.dataset.tap = "toggle";
+        panel.style.setProperty("--i", String(index));
+        panel.style.setProperty("--n", String(parts.length));
+        panel.style.zIndex = String(parts.length - index);
         panel.style.color = item.color;
         if (index === 0) panel.style.backgroundColor = item.bg;
         panels.append(panel);

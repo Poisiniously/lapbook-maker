@@ -165,12 +165,12 @@ button { cursor: pointer; }
 .flap-face, .flap-back { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; border: 1px solid #c4b0e8; border-radius: 3px; backface-visibility: hidden; cursor: pointer; overflow-wrap: anywhere; }
 .flap-back { transform: rotateX(180deg); background-image: linear-gradient(#0000000d, #0000000d); }
 .type-flap.is-open .flap-front { transform: rotateX(-172deg); }
-.accordion-panels { position: absolute; inset: 0; display: flex; align-items: stretch; gap: 2px; overflow: hidden; }
-.accordion-panel { display: flex; align-items: center; justify-content: center; min-width: 0; flex: 1; padding: 6px; border: 1px solid #c9b7e6; background: #e8def8; color: #63517f; font-size: .8em; overflow: hidden; }
+/* Accordion: closed, the parts lie stacked at the left; open, they unfold to the right. */
+.accordion-panels { position: absolute; inset: 0; }
+.accordion-panel { position: absolute; top: 0; height: 100%; width: calc(100% / var(--n, 3)); left: calc(min(var(--i, 0), 4) * 3px); display: flex; align-items: center; justify-content: center; min-width: 0; padding: 6px; border: 1px solid #c9b7e6; background: #e8def8; color: #63517f; font-size: .8em; overflow: hidden; cursor: pointer; transition: left .5s ease; transition-delay: calc(var(--i, 0) * 45ms); }
+.type-accordion.is-open .accordion-panel { left: calc(var(--i, 0) * 100% / var(--n, 3)); }
 .accordion-panel:nth-child(2) { background: #f4e2eb; border-color: #e3c6d5; }
 .accordion-panel:nth-child(3) { background: #e1eee5; border-color: #c7dfcf; }
-.type-accordion:not(.is-open) .accordion-panel:not(:first-child) { display: none; }
-.type-accordion:not(.is-open) .accordion-panel:first-child { flex: 1; }
 /* Mini book: the cover swings open around the left edge; its back is the inside of the cover. */
 .type-booklet { perspective: 900px; }
 .booklet-cover { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d; transition: transform .6s ease; z-index: 2; }
@@ -358,16 +358,15 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .fan2-fold { top: 0; bottom: 0; left: 17%; border-left: 1.5px dashed #655d70; }
 .fan2-glue-guide { left: 0; top: 0; bottom: 0; width: 17%; }
 
-.leporello-layout { display: flex; flex-direction: column; border: 1.5px solid #49444d; }
-.leporello-panel { display: flex; flex: 1 1 25%; align-items: center; justify-content: center; min-width: 0; padding: 7px; border-bottom: 1px solid #49444d; font-size: .72em; text-align: center; overflow-wrap: anywhere; }
-.leporello-panel:last-child { border-bottom: 0; }
-.leporello-layout:not(.is-open) .leporello-panel:not(:first-child) { display: none; }
-.leporello-layout:not(.is-open) .leporello-panel:first-child { flex: 1; }
-.leporello-crease { left: 0; right: 0; border-top: 1.5px dashed #655d70; }
-.leporello-crease.crease-0 { left: 25%; }
-.leporello-crease.crease-1 { left: 50%; }
-.leporello-crease.crease-2 { left: 75%; }
-.leporello-cut { inset: 0; border: 1.5px solid #49444d; }
+/* Concertina fold (Leporello, Faltblatt with other than 3 fields): pages stack when closed
+   and unfold downwards one after another. */
+.concertina-panel { position: absolute; left: 0; width: 100%; height: calc(100% / var(--n, 4)); top: calc(min(var(--i, 0), 4) * 3px); display: flex; align-items: center; justify-content: center; min-width: 0; padding: 7px; border: 1.5px solid #49444d; font-size: .72em; text-align: center; overflow-wrap: anywhere; cursor: pointer; transition: top .5s ease; transition-delay: calc(var(--i, 0) * 45ms); }
+.is-open > .concertina-panel { top: calc(var(--i, 0) * 100% / var(--n, 4)); }
+.is-open > .concertina-panel:not(:first-of-type) { border-top-width: 0; }
+.concertina-crease { left: 0; right: 0; border-top: 1.5px dashed #655d70; transition: opacity .3s ease; }
+.concertina-cut { inset: 0; border: 1.5px solid #49444d; transition: opacity .3s ease; }
+.catalog-layout:not(.is-open) > .concertina-crease,
+.catalog-layout:not(.is-open) > .concertina-cut { opacity: 0; }
 .leporello-layout .fold-toggle, .foldsheet-layout .fold-toggle, .hexfold-layout .fold-toggle { right: 3px; bottom: 3px; }
 
 .foldcross-layout { overflow: visible; }
@@ -384,26 +383,29 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .cross-fold-v { top: 32%; bottom: 32%; left: 50%; border-left: 1.5px dashed #655d70; }
 .cross-fold-h { left: 32%; right: 32%; top: 50%; border-top: 1.5px dashed #655d70; }
 
-.foldsheet-layout { border: 1.5px solid #49444d; }
-.foldsheet-panel { position: absolute; left: 0; width: 100%; height: 33.333%; display: flex; align-items: center; justify-content: center; padding: 8px; border-bottom: 1.5px solid #49444d; font-size: .72em; }
-.foldsheet-panel-0 { top: 0; }
-.foldsheet-panel-1 { top: 33.333%; }
-.foldsheet-panel-2 { top: 66.666%; border-bottom: 0; }
-.foldsheet-layout:not(.is-open) .foldsheet-panel:not(:first-child) { display: none; }
-.foldsheet-layout:not(.is-open) .foldsheet-panel:first-child { height: 100%; }
-.foldsheet-crease { left: 0; right: 0; border-top: 1.5px dashed #655d70; }
-.foldsheet-crease.crease-0 { top: 33.333%; }
-.foldsheet-crease.crease-1 { top: 66.666%; }
-.foldsheet-cut { inset: 0; border: 1.5px solid #49444d; }
+/* Letter fold (Faltblatt with 3 fields): the top and bottom thirds fold over the middle one. */
+.foldsheet-layout.is-letter { perspective: 900px; }
+.letter-panel { position: absolute; left: 0; width: 100%; height: calc(100% / 3); transform-style: preserve-3d; transition: transform .6s ease; cursor: pointer; }
+.letter-panel-0 { transform-origin: center bottom; z-index: 3; }
+.letter-panel-1 { z-index: 1; }
+.letter-panel-2 { transform-origin: center top; z-index: 2; }
+.letter-face, .letter-back { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; border: 1.5px solid #49444d; font-size: .72em; text-align: center; overflow-wrap: anywhere; backface-visibility: hidden; }
+.letter-back { transform: rotateX(180deg); background-image: linear-gradient(#0000000a, #0000000a); font-weight: 750; }
+.foldsheet-layout.is-letter:not(.is-open) .letter-panel-0 { transform: rotateX(180deg); }
+.foldsheet-layout.is-letter:not(.is-open) .letter-panel-2 { transform: rotateX(-180deg); }
+.foldsheet-crease { left: 0; right: 0; }
 
 .hexfold-part { position: absolute; left: 0; width: 100%; height: 50%; display: grid; place-items: center; padding: 12px; border: 1.5px solid #49444d; clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%); font-size: .72em; text-align: center; }
 .hexfold-lower { bottom: 0; }
-.hexfold-upper { top: 0; z-index: 2; transform-origin: center bottom; transition: transform .45s ease; }
-/* Open: the top flap turns over and stays in the top half, showing its inside. */
-.hexfold-layout.is-open .hexfold-upper { transform: translateY(-100%) rotateX(180deg); }
-.hexfold-label-back { display: none; }
-.hexfold-layout.is-open .hexfold-label-front { display: none; }
-.hexfold-layout.is-open .hexfold-label-back { display: block; transform: scaleY(-1); }
+/* The top hexagon folds down onto the lower one. Closed: its outside (title) faces up.
+   Open: the flap lies flat in the top half and shows its inside. */
+.hexfold-layout { --hex: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); perspective: 900px; }
+.hexfold-upper { position: absolute; left: 0; width: 100%; top: 0; height: 50%; z-index: 2; transform-origin: center bottom; transform-style: preserve-3d; transition: transform .6s ease; cursor: pointer; }
+.hexfold-layout:not(.is-open) .hexfold-upper { transform: rotateX(180deg); }
+.hex-face { position: absolute; inset: 0; backface-visibility: hidden; }
+.hex-face::before { content: ""; position: absolute; inset: 0; background: var(--outline, #49444d); clip-path: var(--hex); }
+.hex-fill { position: absolute; inset: 2px; display: grid; place-items: center; padding: 12px; clip-path: var(--hex); font-size: .72em; text-align: center; overflow-wrap: anywhere; }
+.hex-face-back { transform: rotateX(180deg); }
 .hexfold-crease { left: 0; right: 0; top: 50%; border-top: 1.5px dashed #655d70; }
 .hexfold-cut { inset: 0; }
 
