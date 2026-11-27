@@ -320,6 +320,12 @@
 
   // Hinged paper flap (flower, fold cross, fold heart): the front carries the text,
   // the back is the plain underside. Closed, the flap lies folded over the center.
+  // Text on a flap that points downwards gets turned by 180° so it stays readable.
+  function setUprightText(flap, rotation) {
+    const turn = ((rotation % 360) + 360) % 360;
+    if (turn > 100 && turn < 260) flap.style.setProperty("--text-rot", "180deg");
+  }
+
   function makeFoldFlap(item, index, className, text) {
     const panel = makeTemplatePanel(item, index, "fold-flap " + className, "");
     panel.style.backgroundColor = "transparent";
@@ -333,7 +339,13 @@
       fill.className = "fold-fill";
       fill.style.backgroundColor = item.bg;
       fill.style.color = item.color;
-      if (sideClass === "fold-face") fill.textContent = text;
+      if (sideClass === "fold-face") {
+        // Own text node so upside-down flaps can turn their text around.
+        const label = document.createElement("span");
+        label.className = "fold-text";
+        label.textContent = text;
+        fill.append(label);
+      }
       side.append(fill);
       panel.append(side);
     });
@@ -548,6 +560,7 @@
         flap.style.left = (50 + flapWidth * Math.cos(radians) - flapWidth / 2) + "%";
         flap.style.top = (50 + flapWidth * Math.sin(radians) - flapHeight / 2) + "%";
         flap.style.setProperty("--base-rotation", (angle + 90) + "deg");
+        setUprightText(flap, angle + 90);
         layout.append(flap);
       });
       layout.append(makeToggle(item, "Alle Klappen auf- oder zuklappen"));
@@ -692,7 +705,9 @@
         baseFill.style.color = item.color;
         baseFill.textContent = lines.slice(1).join("\n");
         base.append(baseFill);
-        unit.append(base, makeFoldFlap(item, index, "heart-flap heart-flap-" + index, lines[0]));
+        const heartFlap = makeFoldFlap(item, index, "heart-flap heart-flap-" + index, lines[0]);
+        setUprightText(heartFlap, index * 360 / count);
+        unit.append(base, heartFlap);
         layout.append(unit);
       });
       layout.append(makeToggle(item, "Alle Herzen auf- oder zuklappen"));
