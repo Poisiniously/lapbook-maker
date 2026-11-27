@@ -690,3 +690,4 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .fold-text { display: block; transform: rotate(var(--text-rot, 0deg)); }
 .heart-fold { transition: opacity .3s ease; }
 .foldheart-layout:not(.is-open) > .heart-fold { opacity: 0; }
+.icon-button:disabled { opacity: .4; cursor: default; }

@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#f7f4ff">
   <meta name="description" content="Gestalte digitale Lapbooks mit Klappen, Faltbüchern, Taschen, Drehscheiben und vielen Papierformen.">
   <title>Lapbook Maker</title>
-  <link rel="stylesheet" href="styles.css?v=folds-8">
-  <script src="app.js?v=folds-8" defer></script>
+  <link rel="stylesheet" href="styles.css?v=folds-9">
+  <script src="app.js?v=folds-9" defer></script>
 </head>
 <body>
   <script>
@@ -99,6 +99,8 @@
       <div class="workspace-toolbar">
         <div class="canvas-label"><span class="online-dot"></span><strong>Arbeitsfläche</strong><span class="separator">/</span><span id="selection-label">Nichts ausgewählt</span></div>
         <div class="canvas-actions">
+          <button class="icon-button" id="undo" type="button" aria-label="Rückgängig" title="Rückgängig (Strg+Z)" disabled>↶</button>
+          <button class="icon-button" id="redo" type="button" aria-label="Wiederholen" title="Wiederholen (Strg+Umschalt+Z)" disabled>↷</button>
           <button class="icon-button" id="zoom-out" type="button" aria-label="Verkleinern" title="Verkleinern">−</button>
           <span id="zoom-label">100%</span>
           <button class="icon-button" id="zoom-in" type="button" aria-label="Vergrößern" title="Vergrößern">+</button>
@@ -123,6 +125,8 @@
         <span><kbd>Drag</kbd> Elemente bewegen</span>
         <span><kbd>Entf</kbd> Ausgewähltes löschen</span>
         <span><kbd>Strg</kbd> + <kbd>D</kbd> Duplizieren</span>
+        <span><kbd>Strg</kbd> + <kbd>Z</kbd> Rückgängig</span>
+        <span><kbd>↑↓←→</kbd> Feinverschieben</span>
       </div>
     </section>
 

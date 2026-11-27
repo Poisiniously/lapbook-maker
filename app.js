@@ -163,14 +163,70 @@
     }
   }
 
+  // Undo/redo: snapshots of the project, taken whenever it is saved.
+  const MAX_ELEMENTS = 500;
+  const history = { undo: [], redo: [], last: null, lastTime: 0, restoring: false };
+
+  function projectSnapshot() {
+    return JSON.stringify({ title: project.title, paper: project.paper, guides: project.guides !== false, elements: project.elements });
+  }
+
+  // Open/closed state alone is not worth an undo step.
+  function historySignature(json) {
+    return json.replace(/"open":(true|false),?/g, "").replace(/"openPanels":\[[^\]]*\],?/g, "");
+  }
+
+  function trackHistory(state) {
+    if (history.restoring) return;
+    if (history.last === null) { history.last = state; return; }
+    if (historySignature(state) === historySignature(history.last)) { history.last = state; return; }
+    const now = Date.now();
+    // Changes in quick succession (typing, sliders) share one undo step.
+    if (now - history.lastTime > 700 || history.undo.length === 0) {
+      history.undo.push(history.last);
+      if (history.undo.length > 60) history.undo.shift();
+    }
+    history.lastTime = now;
+    history.redo.length = 0;
+    history.last = state;
+  }
+
+  function updateHistoryButtons() {
+    const undoButton = document.getElementById("undo");
+    const redoButton = document.getElementById("redo");
+    if (undoButton) undoButton.disabled = history.undo.length === 0;
+    if (redoButton) redoButton.disabled = history.redo.length === 0;
+  }
+
+  function stepHistory(from, to, emptyMessage) {
+    if (!from.length) { showToast(emptyMessage); return; }
+    const target = from.pop();
+    to.push(history.last);
+    const parsed = JSON.parse(target);
+    const selectedId = project.selectedId;
+    project = loadFromImport({ title: parsed.title, paper: parsed.paper, guides: parsed.guides, elements: parsed.elements });
+    // Keep ids stable so the selection survives.
+    project.elements.forEach(function (item, index) { item.id = parsed.elements[index].id; });
+    project.selectedId = project.elements.some(function (item) { return item.id === selectedId; }) ? selectedId : null;
+    projectTitle.value = project.title;
+    history.last = target;
+    history.lastTime = 0;
+    history.restoring = true;
+    renderStage();
+    renderInspector();
+    persist();
+    history.restoring = false;
+  }
+
+  function undo() { stepHistory(history.undo, history.redo, "Nichts zum Rückgängigmachen"); }
+  function redo() { stepHistory(history.redo, history.undo, "Nichts zum Wiederholen"); }
+
   function persist() {
+    const state = projectSnapshot();
+    trackHistory(state);
+    updateHistoryButtons();
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        title: project.title,
-        paper: project.paper,
-        guides: project.guides !== false,
-        elements: project.elements
-      }));
+      localStorage.setItem(STORAGE_KEY, state);
       saveState.innerHTML = '<span class="save-dot"></span> Lokal gespeichert';
     } catch (error) {
       saveState.innerHTML = '<span class="save-dot" style="background:#d59c52"></span> Speicher voll';
@@ -1166,6 +1222,10 @@
   function addElement(type) {
     const template = templates[type];
     if (!template) return;
+    if (project.elements.length >= MAX_ELEMENTS) {
+      showToast("Maximal " + MAX_ELEMENTS + " Elemente möglich.");
+      return;
+    }
     const count = project.elements.length;
     const item = Object.assign({}, template, {
       id: uid(),
@@ -1189,6 +1249,10 @@
   function duplicateSelected() {
     const item = getSelected();
     if (!item) return;
+    if (project.elements.length >= MAX_ELEMENTS) {
+      showToast("Maximal " + MAX_ELEMENTS + " Elemente möglich.");
+      return;
+    }
     const copy = Object.assign({}, item, {
       id: uid(),
       x: clamp(item.x + 25, 0, 1000 - item.w),
@@ -1306,6 +1370,8 @@
   });
 
   stage.addEventListener("pointerdown", function (event) {
+    // Only the primary button (or touch/pen contact) starts a drag.
+    if (event.button !== 0 || event.isPrimary === false) return;
     const itemNode = event.target.closest(".element");
     if (!itemNode || event.target.closest(".fold-toggle, [data-action='panel-toggle']")) return;
     const item = project.elements.find(function (entry) { return entry.id === itemNode.dataset.id; });
@@ -1509,7 +1575,7 @@
       showToast("Die Arbeitsfläche ist bereits leer");
       return;
     }
-    if (!window.confirm("Wirklich alle Elemente von der Arbeitsfläche löschen? Dieser Schritt kann nicht rückgängig gemacht werden.")) return;
+    if (!window.confirm("Wirklich alle Elemente von der Arbeitsfläche löschen? Mit Strg+Z kannst du das rückgängig machen.")) return;
     project.elements = [];
     project.selectedId = null;
     renderStage();
@@ -1534,7 +1600,7 @@
       try {
         const parsed = JSON.parse(String(reader.result));
         if (!parsed || !Array.isArray(parsed.elements)) throw new Error("Ungültige Lapbook-Datei");
-        if (parsed.elements.length > 500) throw new Error("Die Datei enthält mehr als 500 Elemente.");
+        if (parsed.elements.length > MAX_ELEMENTS) throw new Error("Die Datei enthält mehr als " + MAX_ELEMENTS + " Elemente.");
         const next = { title: String(parsed.title || "Importiertes Lapbook").slice(0, 60), paper: parsed.paper, guides: parsed.guides !== false, elements: parsed.elements, selectedId: null };
         const valid = next.elements.every(function (item) { return item && typeof item === "object" && Object.hasOwn(templates, migrateType(item.type)); });
         if (!valid) throw new Error("Die Datei enthält unbekannte Elemente.");
@@ -1573,7 +1639,19 @@
 
   document.getElementById("zoom-in").addEventListener("click", function () { zoom = clamp(zoom + 0.1, 0.6, 1.5); applyZoom(); });
   document.getElementById("zoom-out").addEventListener("click", function () { zoom = clamp(zoom - 0.1, 0.6, 1.5); applyZoom(); });
-  document.getElementById("zoom-fit").addEventListener("click", function () { zoom = 1; applyZoom(); });
+  document.getElementById("zoom-fit").addEventListener("click", function () {
+    // Fit the whole stage (10:7) into the visible workspace.
+    const viewport = document.getElementById("canvas-viewport");
+    const style = getComputedStyle(viewport);
+    const availW = viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const availH = viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    const width = Math.min(availW, availH / 0.7);
+    zoom = clamp(width / Math.min(900, availW), 0.6, 1.5);
+    applyZoom();
+    viewport.scrollTo(0, 0);
+  });
+  document.getElementById("undo").addEventListener("click", undo);
+  document.getElementById("redo").addEventListener("click", redo);
 
   document.addEventListener("keydown", function (event) {
     if (!infoModal.hidden) {
@@ -1592,6 +1670,37 @@
     if (!editing && (event.key === "Delete" || event.key === "Backspace")) {
       event.preventDefault();
       deleteSelected();
+    }
+    const mod = event.ctrlKey || event.metaKey;
+    if (!editing && mod && event.key.toLowerCase() === "z") {
+      event.preventDefault();
+      if (event.shiftKey) redo(); else undo();
+      return;
+    }
+    if (!editing && mod && event.key.toLowerCase() === "y") {
+      event.preventDefault();
+      redo();
+      return;
+    }
+    // Arrow keys nudge the selected element (Shift = 10 units).
+    const arrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    if (!editing && !mod && arrows[event.key] && tag !== "BUTTON" && getSelected()) {
+      event.preventDefault();
+      const item = getSelected();
+      const step = event.shiftKey ? 10 : 1;
+      item.x = clamp(item.x + arrows[event.key][0] * step, 0, 1000 - item.w);
+      item.y = clamp(item.y + arrows[event.key][1] * step, 0, 700 - item.h);
+      const node = stageElements.querySelector('[data-id="' + item.id + '"]');
+      if (node) {
+        node.style.left = (item.x / 10) + "%";
+        node.style.top = (item.y / 7) + "%";
+      }
+      const xInput = document.getElementById("element-x");
+      const yInput = document.getElementById("element-y");
+      if (xInput) xInput.value = String(item.x);
+      if (yInput) yInput.value = String(item.y);
+      persist();
+      return;
     }
     if (!editing && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "d") {
       event.preventDefault();
