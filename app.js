@@ -17,6 +17,9 @@
 
   const MAX_PARTS = 12;
 
+  // Star spikes / polygon corners per type: [min, max].
+  const pointRanges = { star: [4, 12], hexagon: [3, 12] };
+
   const defaults = {
     title: "Mein Lapbook",
     paper: "#fffdf7",
@@ -35,8 +38,10 @@
     note: { type: "note", w: 180, h: 120, text: "Schreibe hier deine Notiz.", secondary: "", bg: "#fff3cf", color: "#725a32" },
     circle: { type: "circle", w: 125, h: 125, text: "Kreis", secondary: "", bg: "#e9defa", color: "#594b72" },
     triangle: { type: "triangle", w: 145, h: 130, text: "Dreieck", secondary: "", bg: "#f5d9e5", color: "#87566f" },
-    star: { type: "star", w: 140, h: 140, text: "Stern", secondary: "", bg: "#ffe7ae", color: "#8c6d35" },
-    hexagon: { type: "hexagon", w: 160, h: 125, text: "Sechseck", secondary: "", bg: "#d5e9df", color: "#4f7560" },
+    star: { type: "star", w: 140, h: 140, text: "Stern", secondary: "", bg: "#ffe7ae", color: "#8c6d35", points: 5 },
+    hexagon: { type: "hexagon", w: 160, h: 125, text: "Vieleck", secondary: "", bg: "#d5e9df", color: "#4f7560", points: 6 },
+    heart: { type: "heart", w: 140, h: 125, text: "Herz", secondary: "", bg: "#f8d3df", color: "#8a4d68" },
+    roundrect: { type: "roundrect", w: 190, h: 115, text: "Rechteck", secondary: "", bg: "#d9e7f7", color: "#4d6485" },
     banner: { type: "banner", w: 270, h: 75, text: "Mein Thema", secondary: "", bg: "#f3cddd", color: "#87536e" },
     flower: { type: "flower", w: 220, h: 220, text: "Blütenmitte", secondary: "Blatt 1|Blatt 2|Blatt 3|Blatt 4|Blatt 5", bg: "#f4d7e5", color: "#80516b" },
     fan1: { type: "fan1", w: 250, h: 200, text: "Fächer", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e8def8", color: "#62517f" },
@@ -124,6 +129,7 @@
       parts: parts,
       centerSides: centerSides,
       centerSidesAuto: centerSidesAuto,
+      points: pointRanges[item.type] ? clamp(Math.round(Number(item.points)) || base.points, pointRanges[item.type][0], pointRanges[item.type][1]) : undefined,
       bg: /^#[0-9a-f]{6}$/i.test(item.bg) ? item.bg : base.bg,
       color: /^#[0-9a-f]{6}$/i.test(item.color) ? item.color : base.color,
       open: Boolean(item.open),
@@ -260,12 +266,97 @@
     const names = {
       flap: "Klappe", accordion: "Akkordeon", booklet: "Mini-Buch", pocket: "Tasche",
       wheel: "Drehscheibe", tab: "Reiter", note: "Notizkarte", circle: "Kreis",
-      triangle: "Dreieck", star: "Stern", hexagon: "Sechseck", banner: "Banner",
+      triangle: "Dreieck", star: "Stern", hexagon: "Vieleck", banner: "Banner", heart: "Herz", roundrect: "Rechteck",
       flower: "Blume", fan1: "Fächer 1", fan2: "Fächer 2",
       leporello: "Leporello", foldcross: "Faltkreuz", foldsheet: "Faltblatt", hexfold: "Falt-Sechseck",
       flipflap: "Flip-Flap", foldheart: "Faltherz"
     };
     return names[type] || "Element";
+  }
+
+  // Cut-paper shapes are drawn as SVG so the outline keeps the same width at every size.
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const outlineShapes = new Set(["triangle", "star", "hexagon", "banner", "heart"]);
+  const HEART_PATH = "M50 94 C8 62 0 36 11 19 C22 3 44 8 50 27 C56 8 78 3 89 19 C100 36 92 62 50 94 Z";
+
+  function shadeColor(hex, amount) {
+    return "#" + [1, 3, 5].map(function (offset) {
+      return Math.round(parseInt(hex.slice(offset, offset + 2), 16) * (1 - amount)).toString(16).padStart(2, "0");
+    }).join("");
+  }
+
+  // Scale a point list so it fills the whole 0-100 box.
+  function fitPoints(points) {
+    const xs = points.map(function (point) { return point[0]; });
+    const ys = points.map(function (point) { return point[1]; });
+    const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    const minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+    return points.map(function (point) {
+      return [(point[0] - minX) / (maxX - minX) * 100, (point[1] - minY) / (maxY - minY) * 100];
+    });
+  }
+
+  function shapePoints(item) {
+    if (item.type === "triangle") return [[50, 0], [100, 100], [0, 100]];
+    if (item.type === "banner") {
+      // The notch depth stays the same in absolute size, whatever the width.
+      const notch = Math.min(20, item.w * 0.25) / item.w * 100;
+      return [[0, 0], [100, 0], [100 - notch, 50], [100, 100], [0, 100], [notch, 50]];
+    }
+    const range = pointRanges[item.type];
+    const count = clamp(Math.round(Number(item.points)) || templates[item.type].points, range[0], range[1]);
+    const points = [];
+    if (item.type === "star") {
+      const inner = clamp(0.6 - count * 0.04, 0.3, 0.46);
+      for (let index = 0; index < count * 2; index += 1) {
+        const radius = index % 2 ? inner : 1;
+        const angle = -Math.PI / 2 + index * Math.PI / count;
+        points.push([radius * Math.cos(angle), radius * Math.sin(angle)]);
+      }
+    } else {
+      // Even counts get a flat top edge, odd counts a point on top.
+      const start = -Math.PI / 2 + (count % 2 === 0 ? Math.PI / count : 0);
+      for (let index = 0; index < count; index += 1) {
+        const angle = start + index * 2 * Math.PI / count;
+        points.push([Math.cos(angle), Math.sin(angle)]);
+      }
+    }
+    return fitPoints(points);
+  }
+
+  // Area (in %) where the text of a shape may sit without touching the outline.
+  function shapeTextBox(item) {
+    if (item.type === "triangle" || (item.type === "hexagon" && Number(item.points) === 3)) return { top: 40, right: 22, bottom: 6, left: 22 };
+    if (item.type === "star") return { top: 32, right: 28, bottom: 26, left: 28 };
+    if (item.type === "heart") return { top: 20, right: 16, bottom: 26, left: 16 };
+    if (item.type === "banner") {
+      const pad = Math.min(20, item.w * 0.25) / item.w * 100 + 3;
+      return { top: 0, right: pad, bottom: 0, left: pad };
+    }
+    return { top: 14, right: 14, bottom: 14, left: 14 };
+  }
+
+  function makeShape(item) {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", "shape-outline");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("aria-hidden", "true");
+    const shape = document.createElementNS(SVG_NS, item.type === "heart" ? "path" : "polygon");
+    if (item.type === "heart") shape.setAttribute("d", HEART_PATH);
+    else shape.setAttribute("points", shapePoints(item).map(function (point) { return point[0].toFixed(2) + "," + point[1].toFixed(2); }).join(" "));
+    shape.setAttribute("fill", item.bg);
+    shape.setAttribute("stroke", shadeColor(item.bg, 0.25));
+    shape.setAttribute("stroke-width", "1.5");
+    shape.setAttribute("stroke-linejoin", "round");
+    shape.setAttribute("vector-effect", "non-scaling-stroke");
+    svg.append(shape);
+    const box = shapeTextBox(item);
+    const text = makeLabel(item.text, "shape-text");
+    text.style.inset = box.top + "% " + box.right + "% " + box.bottom + "% " + box.left + "%";
+    // The star core is narrow, so its text is a bit smaller.
+    if (item.type === "star") text.style.fontSize = "0.82em";
+    return [svg, text];
   }
 
   function makeLabel(text, className) {
@@ -799,7 +890,7 @@
     node.style.zIndex = String(3 + project.elements.indexOf(item));
     node.style.color = item.color;
 
-    if (catalogTypes.has(item.type) || ["flap", "booklet", "accordion", "tab"].includes(item.type)) {
+    if (catalogTypes.has(item.type) || outlineShapes.has(item.type) || ["flap", "booklet", "accordion", "tab"].includes(item.type)) {
       node.style.background = "transparent";
     } else {
       node.style.backgroundColor = item.bg;
@@ -868,10 +959,16 @@
       face.style.backgroundColor = item.bg;
       face.style.color = item.color;
       node.append(glue, face);
+    } else if (outlineShapes.has(item.type)) {
+      node.append.apply(node, makeShape(item));
     } else {
       node.append(makeLabel(item.text));
+      if (["note", "circle", "roundrect"].includes(item.type)) {
+        node.style.setProperty("--shade", shadeColor(item.bg, 0.2));
+        node.style.setProperty("--fold", shadeColor(item.bg, 0.08));
+      }
     }
-    if (!catalogTypes.has(item.type) && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet" && item.type !== "tab") {
+    if (!catalogTypes.has(item.type) && !outlineShapes.has(item.type) && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet" && item.type !== "tab") {
       node.style.backgroundColor = item.bg;
     }
     // Hover hint on everything that reacts to a click.
@@ -1024,8 +1121,10 @@
     note: { what: "Eine Notizkarte für kurze Texte.", steps: ["Karte ausschneiden.", "Beschriften.", "Aufkleben."], tip: "Stichworte statt ganzer Sätze passen besser auf kleine Karten." },
     circle: { what: "Ein Kreis als Schmuck oder Textfeld.", steps: ["Mit einem Zirkel oder einer Schablone aufzeichnen.", "Ausschneiden.", "Aufkleben."], tip: "Ein Glas als Schablone funktioniert gut." },
     triangle: { what: "Ein Dreieck als Schmuck oder Textfeld.", steps: ["Mit dem Geodreieck aufzeichnen.", "Ausschneiden.", "Aufkleben."], tip: "Gleichseitige Dreiecke wirken besonders ordentlich." },
-    star: { what: "Ein Stern als Schmuck oder Textfeld.", steps: ["Schablone aufzeichnen.", "Ausschneiden.", "Aufkleben."], tip: "Falte das Papier vor dem Schneiden, so wird der Stern gleichmäßig." },
-    hexagon: { what: "Ein Sechseck als Schmuck oder Textfeld.", steps: ["Kreis in sechs Teile teilen und verbinden.", "Ausschneiden.", "Aufkleben."], tip: "Sechsecke lassen sich lückenlos aneinanderlegen." },
+    star: { what: "Ein Stern mit 4 bis 12 Zacken als Schmuck oder Textfeld.", steps: ["Zackenzahl wählen und eine Schablone aufzeichnen.", "Ausschneiden.", "Aufkleben."], tip: "Falte das Papier vor dem Schneiden, so wird der Stern gleichmäßig." },
+    hexagon: { what: "Ein Vieleck mit 3 bis 12 Ecken als Schmuck oder Textfeld (Standard: Sechseck).", steps: ["Einen Kreis in gleich große Teile teilen und die Punkte verbinden.", "Ausschneiden.", "Aufkleben."], tip: "Sechsecke lassen sich lückenlos aneinanderlegen." },
+    heart: { what: "Ein Herz als Schmuck oder Textfeld.", steps: ["Eine Herzhälfte auf gefaltetes Papier zeichnen.", "Ausschneiden und aufklappen.", "Beschriften und aufkleben."], tip: "Durch das Falten wird das Herz auf beiden Seiten gleich." },
+    roundrect: { what: "Ein Rechteck mit runden Ecken für Karten und Textfelder.", steps: ["Rechteck zeichnen und ausschneiden.", "Die Ecken mit der Schere abrunden, eine Münze dient als Schablone.", "Beschriften und aufkleben."], tip: "Runde Ecken sind beim Anfassen angenehmer als spitze." },
     banner: { what: "Ein Banner für Titel und Überschriften.", steps: ["Streifen ausschneiden.", "Die Enden dreieckig einschneiden.", "Titel aufschreiben und aufkleben."], tip: "Große Schrift und kurze Titel wirken am besten." }
   };
 
@@ -1084,6 +1183,10 @@
 
     if (secondaryLabels[item.type]) {
       html += fieldMarkup(secondaryLabels[item.type], "element-secondary", item.secondary, { kind: "textarea", maxLength: 500 });
+    }
+
+    if (pointRanges[item.type]) {
+      html += fieldMarkup(item.type === "star" ? "Zacken" : "Ecken", "shape-points", item.points, { kind: "range", min: pointRanges[item.type][0], max: pointRanges[item.type][1], step: 1 });
     }
 
     if (item.type === "flower") {
@@ -1173,6 +1276,14 @@
 
     const secondaryInput = document.getElementById("element-secondary");
     if (secondaryInput) secondaryInput.addEventListener("input", function () { updateItem("secondary", secondaryInput.value); });
+
+    const shapePointsInput = document.getElementById("shape-points");
+    if (shapePointsInput) shapePointsInput.addEventListener("input", function () {
+      item.points = clamp(Math.round(Number(shapePointsInput.value)) || templates[item.type].points, pointRanges[item.type][0], pointRanges[item.type][1]);
+      document.getElementById("shape-points-value").textContent = String(item.points);
+      renderStage();
+      persist();
+    });
 
     const centerAuto = document.getElementById("flower-center-auto");
     if (centerAuto) centerAuto.addEventListener("change", function () {

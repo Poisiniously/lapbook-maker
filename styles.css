@@ -110,6 +110,7 @@ button { cursor: pointer; }
 .art-circle { width: 31px; height: 31px; border-radius: 50%; }
 .art-triangle { width: 0; height: 0; border: 0; background: transparent; border-left: 18px solid transparent; border-right: 18px solid transparent; border-bottom: 31px solid #d8c9f1; }
 .art-star { color: #bf9a43; background: #fff2cf; border-color: #f0dfad; }
+.art-roundrect { width: 40px; height: 28px; border-radius: 10px; }
 .art-hexagon { width: 37px; height: 32px; clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%); }
 .art-banner { width: 43px; height: 23px; border-radius: 2px; background: #f2c9db; color: #985c7a; border-color: #eab4cb; font-size: 9px; }
 .art-tab { width: 32px; height: 26px; border-radius: 6px 6px 2px 2px; font-size: 8px; }
@@ -147,13 +148,12 @@ button { cursor: pointer; }
 .element.selected { outline: 2px solid #8b69d0; outline-offset: 3px; }
 .element.selected::after { content: ""; position: absolute; inset: -7px; border: 1px dashed #7957c88c; pointer-events: none; }
 .element-label { padding: 8px; overflow-wrap: anywhere; white-space: pre-wrap; width: 100%; }
-.type-note { border: 1px solid #e6d4a9; border-radius: 3px; background: #fff3cf; box-shadow: 2px 3px 0 #a284491f; }
-.type-note::before { content: ""; position: absolute; right: 0; top: 0; border-style: solid; border-width: 0 16px 16px 0; border-color: transparent #f2dfa9 transparent transparent; }
-.type-circle { border-radius: 50%; background: #e9defa; border: 1px solid #cbb8ea; }
-.type-triangle { background: #f5d9e5; clip-path: polygon(50% 0,100% 100%,0 100%); }
-.type-star { background: #ffe7ae; color: #8c6d35; clip-path: polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 94%,50% 72%,21% 94%,32% 57%,2% 35%,39% 35%); }
-.type-hexagon { background: #d5e9df; clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%); }
-.type-banner { background: #f3cddd; color: #87536e; clip-path: polygon(0 0,100% 0,91% 50%,100% 100%,0 100%,9% 50%); }
+.type-note { border: 1.5px solid var(--shade, #e6d4a9); border-radius: 3px; background: #fff3cf; box-shadow: 2px 3px 0 #a284491f; }
+.type-note::before { content: ""; position: absolute; right: 0; top: 0; border-style: solid; border-width: 0 16px 16px 0; border-color: transparent var(--fold, #f2dfa9) transparent transparent; }
+.type-circle { border-radius: 50%; background: #e9defa; border: 1.5px solid var(--shade, #cbb8ea); }
+.type-roundrect { border-radius: 22px; background: #d9e7f7; border: 1.5px solid var(--shade, #a9bdd9); }
+.shape-outline { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.shape-text { position: absolute; display: flex; align-items: center; justify-content: center; overflow: hidden; overflow-wrap: anywhere; white-space: pre-wrap; text-align: center; }
 .type-tab { background: transparent; }
 .tab-face { position: absolute; z-index: 2; left: 0; right: 0; top: 0; height: 72%; display: grid; place-items: center; border: 1.5px solid #49444d; border-radius: 10px 10px 2px 2px; font-weight: 750; letter-spacing: .03em; cursor: pointer; transition: transform .28s ease, box-shadow .2s ease; }
 .tab-glue { position: absolute; z-index: 1; left: 6%; right: 6%; top: 64%; bottom: 0; border: 1.5px dashed #655d70; border-top-style: solid; filter: brightness(.92); }
