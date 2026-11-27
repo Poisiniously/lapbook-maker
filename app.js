@@ -219,6 +219,16 @@
     return label;
   }
 
+  const foldFlapTypes = new Set(["flower", "foldcross", "foldheart"]);
+
+  function syncToggleButton(node, item) {
+    const button = node && node.querySelector(".fold-toggle");
+    if (!button) return;
+    button.textContent = item.open ? "↶" : "↗";
+    button.title = item.open ? "Zuklappen" : "Aufklappen";
+    button.setAttribute("aria-label", button.title);
+  }
+
   function makeToggle(item, label) {
     const button = document.createElement("button");
     button.type = "button";
@@ -308,6 +318,28 @@
     return panel;
   }
 
+  // Hinged paper flap (flower, fold cross, fold heart): the front carries the text,
+  // the back is the plain underside. Closed, the flap lies folded over the center.
+  function makeFoldFlap(item, index, className, text) {
+    const panel = makeTemplatePanel(item, index, "fold-flap " + className, "");
+    panel.style.backgroundColor = "transparent";
+    panel.style.borderColor = "transparent";
+    panel.style.setProperty("--i", String(index));
+    ["fold-face", "fold-back"].forEach(function (sideClass) {
+      const side = document.createElement("span");
+      side.className = sideClass;
+      side.style.backgroundColor = item.color;
+      const fill = document.createElement("span");
+      fill.className = "fold-fill";
+      fill.style.backgroundColor = item.bg;
+      fill.style.color = item.color;
+      if (sideClass === "fold-face") fill.textContent = text;
+      side.append(fill);
+      panel.append(side);
+    });
+    return panel;
+  }
+
   // Concertina fold (Leporello): closed, the pages lie stacked behind the first one;
   // open, they unfold one after another along the creases.
   function renderConcertina(layout, item, labels, prefix, toggleLabel) {
@@ -340,6 +372,8 @@
     const fallbackCount = multiPartCounts[item.type] || 2;
     const labels = getPanelTexts(item, fallbackCount);
     const count = labels.length;
+    // For flap templates "open" means every flap is open (drives the toggle-all button).
+    if (foldFlapTypes.has(item.type)) item.open = (item.openPanels || []).length >= count;
     const center = document.createElement("div");
     center.className = "template-center";
     center.textContent = item.text;
@@ -402,7 +436,7 @@
       const petalWidth = clamp(2 * apothem * Math.tan(Math.PI / sides) * 1.25, 16, 36);
       const petalHeight = 30;
       labels.forEach(function (label, index) {
-        const petal = makeTemplatePanel(item, index, "flower-petal flower-petal-" + index, label);
+        const petal = makeFoldFlap(item, index, "flower-petal flower-petal-" + index, label);
         // Petals point at the middle of an edge, not at a corner.
         const angle = -90 + (index + 0.5) * 360 / count;
         const radians = angle * Math.PI / 180;
@@ -415,9 +449,9 @@
         petal.style.left = (50 + distance * Math.cos(radians) - petalWidth / 2) + "%";
         petal.style.top = (50 + distance * Math.sin(radians) - petalHeight / 2) + "%";
         petal.style.setProperty("--base-rotation", (angle + 90) + "deg");
-        petal.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(petal);
       });
+      layout.append(makeToggle(item, "Alle Blütenblätter auf- oder zuklappen"));
       center.classList.add("flower-center");
       center.style.left = "29%";
       center.style.top = "29%";
@@ -505,7 +539,7 @@
       const flapWidth = clamp(33.33 - (count - 4) * 2, 18, 33.33);
       const flapHeight = flapWidth;
       labels.forEach(function (label, index) {
-        const flap = makeTemplatePanel(item, index, "cross-flap cross-flap-" + index, label);
+        const flap = makeFoldFlap(item, index, "cross-flap cross-flap-" + index, label);
         const angle = -90 + index * 360 / count;
         const radians = angle * Math.PI / 180;
         flap.style.width = flapWidth + "%";
@@ -513,9 +547,9 @@
         flap.style.left = (50 + flapWidth * Math.cos(radians) - flapWidth / 2) + "%";
         flap.style.top = (50 + flapWidth * Math.sin(radians) - flapHeight / 2) + "%";
         flap.style.setProperty("--base-rotation", (angle + 90) + "deg");
-        flap.style.transform = "rotate(" + (angle + 90) + "deg)";
         layout.append(flap);
       });
+      layout.append(makeToggle(item, "Alle Klappen auf- oder zuklappen"));
       const middle = document.createElement("div");
       middle.className = "cross-center";
       middle.textContent = item.text;
@@ -638,14 +672,29 @@
       const heartWidth = clamp(47 - (count - 4) * 2.8, 24, 47);
       const heartHeight = clamp(48 - (count - 4) * 2.7, 25, 48);
       labels.forEach(function (label, index) {
-        const petal = makeTemplatePanel(item, index, "heart-petal heart-petal-" + index, label);
-        petal.style.width = heartWidth + "%";
-        petal.style.height = heartHeight + "%";
-        petal.style.left = (50 - heartWidth / 2) + "%";
-        petal.style.top = (50 - heartHeight) + "%";
-        petal.style.setProperty("--base-rotation", (index * 360 / count) + "deg");
-        layout.append(petal);
+        // Each heart = a fixed lower V part plus an upper flap that folds down over it.
+        // First line = text on the flap, further lines = text under the flap.
+        const lines = label.split("\n");
+        const unit = document.createElement("div");
+        unit.className = "heart-unit";
+        unit.style.width = heartWidth + "%";
+        unit.style.height = heartHeight + "%";
+        unit.style.left = (50 - heartWidth / 2) + "%";
+        unit.style.top = (50 - heartHeight) + "%";
+        unit.style.transform = "rotate(" + (index * 360 / count) + "deg)";
+        const base = document.createElement("div");
+        base.className = "heart-base";
+        base.style.backgroundColor = item.color;
+        const baseFill = document.createElement("span");
+        baseFill.className = "fold-fill";
+        baseFill.style.backgroundColor = item.bg;
+        baseFill.style.color = item.color;
+        baseFill.textContent = lines.slice(1).join("\n");
+        base.append(baseFill);
+        unit.append(base, makeFoldFlap(item, index, "heart-flap heart-flap-" + index, lines[0]));
+        layout.append(unit);
       });
+      layout.append(makeToggle(item, "Alle Herzen auf- oder zuklappen"));
       center.classList.add("heart-center");
       center.style.backgroundColor = item.bg;
       center.style.borderColor = item.color;
@@ -1194,6 +1243,30 @@
       persist();
       return;
     }
+    if (foldFlapTypes.has(item.type)) {
+      // Toggle all flaps at once, one after another.
+      const total = node ? node.querySelectorAll(".template-panel").length : getPanelTexts(item).length;
+      const allOpen = (item.openPanels || []).length >= total;
+      item.openPanels = allOpen ? [] : Array.from({ length: total }, function (_, index) { return index; });
+      item.open = !allOpen;
+      if (!node) {
+        renderStage();
+      } else {
+        const layout = node.querySelector(".catalog-layout");
+        if (layout) {
+          layout.classList.add("is-sweeping");
+          setTimeout(function () { layout.classList.remove("is-sweeping"); }, 900);
+        }
+        node.querySelectorAll(".template-panel").forEach(function (panel) {
+          const isOpen = item.openPanels.includes(Number(panel.dataset.panelIndex));
+          panel.classList.toggle("is-open", isOpen);
+          panel.setAttribute("aria-pressed", String(isOpen));
+        });
+        syncToggleButton(node, item);
+      }
+      persist();
+      return;
+    }
     item.open = !item.open;
     if (!node) {
       renderStage();
@@ -1201,12 +1274,7 @@
       node.classList.toggle("is-open", item.open);
       const layout = node.querySelector(".catalog-layout");
       if (layout) layout.classList.toggle("is-open", item.open);
-      const button = node.querySelector(".fold-toggle");
-      if (button) {
-        button.textContent = item.open ? "↶" : "↗";
-        button.title = item.open ? "Zuklappen" : "Aufklappen";
-        button.setAttribute("aria-label", button.title);
-      }
+      syncToggleButton(node, item);
     }
     persist();
   }
@@ -1232,6 +1300,10 @@
         // Keep the node so the panel animates.
         panelToggle.classList.toggle("is-open", current.has(panelIndex));
         panelToggle.setAttribute("aria-pressed", String(current.has(panelIndex)));
+        if (foldFlapTypes.has(panelItem.type)) {
+          panelItem.open = current.size >= panelNode.querySelectorAll(".template-panel").length;
+          syncToggleButton(panelNode, panelItem);
+        }
       } else {
         renderStage();
       }
