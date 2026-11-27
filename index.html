@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#f7f4ff">
   <meta name="description" content="Gestalte digitale Lapbooks mit Klappen, Faltbüchern, Taschen, Drehscheiben und vielen Papierformen.">
   <title>Lapbook Maker</title>
-  <link rel="stylesheet" href="styles.css?v=folds-10">
-  <script src="app.js?v=folds-10" defer></script>
+  <link rel="stylesheet" href="styles.css?v=folds-11">
+  <script src="app.js?v=folds-11" defer></script>
 </head>
 <body>
   <script>
@@ -51,10 +51,8 @@
       <p class="panel-hint">Klicke auf ein Element, um es auf dein Lapbook zu setzen.</p>
 
       <section class="tool-section">
-        <h2>Falt-Elemente</h2>
+        <h2>Klappen &amp; Taschen</h2>
         <div class="tool-grid">
-          <button class="tool-card" type="button" data-add="accordion"><span class="tool-art art-accordion"><i></i><i></i><i></i></span><span>Akkordeon</span></button>
-          <button class="tool-card" type="button" data-add="wheel"><span class="tool-art art-wheel">✳</span><span>Drehscheibe</span></button>
           <button class="tool-card" type="button" data-add="flap"><span class="tool-art art-flap"><i></i></span><span>Klappe</span></button>
           <button class="tool-card" type="button" data-add="booklet"><span class="tool-art art-booklet"><i></i></span><span>Mini-Buch</span></button>
           <button class="tool-card" type="button" data-add="tab"><span class="tool-art art-tab">TAB</span><span>Reiter</span></button>
@@ -63,17 +61,31 @@
       </section>
 
       <section class="tool-section">
-        <h2>Vorlagenkatalog</h2>
-        <div class="tool-grid tool-grid-catalog">
-          <button class="tool-card" type="button" data-add="flower"><span class="tool-art art-flower">✿</span><span>Blume</span></button>
+        <h2>Aufklappen &amp; Blättern</h2>
+        <div class="tool-grid">
+          <button class="tool-card" type="button" data-add="accordion"><span class="tool-art art-accordion"><i></i><i></i><i></i></span><span>Akkordeon</span></button>
+          <button class="tool-card" type="button" data-add="foldsheet"><span class="tool-art art-sheet">▤</span><span>Faltblatt</span></button>
+          <button class="tool-card" type="button" data-add="flipflap"><span class="tool-art art-flip">▥</span><span>Flip-Flap</span></button>
+          <button class="tool-card" type="button" data-add="leporello"><span class="tool-art art-leporello">▥</span><span>Leporello</span></button>
+        </div>
+      </section>
+
+      <section class="tool-section">
+        <h2>Drehen &amp; Fächern</h2>
+        <div class="tool-grid">
+          <button class="tool-card" type="button" data-add="wheel"><span class="tool-art art-wheel">✳</span><span>Drehscheibe</span></button>
           <button class="tool-card" type="button" data-add="fan1"><span class="tool-art art-fan">≋</span><span>Fächer 1</span></button>
           <button class="tool-card" type="button" data-add="fan2"><span class="tool-art art-fan">▤</span><span>Fächer 2</span></button>
-          <button class="tool-card" type="button" data-add="foldsheet"><span class="tool-art art-sheet">▤</span><span>Faltblatt</span></button>
+        </div>
+      </section>
+
+      <section class="tool-section">
+        <h2>Faltformen</h2>
+        <div class="tool-grid">
+          <button class="tool-card" type="button" data-add="flower"><span class="tool-art art-flower">✿</span><span>Blume</span></button>
           <button class="tool-card" type="button" data-add="foldheart"><span class="tool-art art-heart">♥</span><span>Faltherz</span></button>
           <button class="tool-card" type="button" data-add="foldcross"><span class="tool-art art-cross">✚</span><span>Faltkreuz</span></button>
           <button class="tool-card" type="button" data-add="hexfold"><span class="tool-art art-hexagon"></span><span>Falt-Sechseck</span></button>
-          <button class="tool-card" type="button" data-add="flipflap"><span class="tool-art art-flip">▥</span><span>Flip-Flap</span></button>
-          <button class="tool-card" type="button" data-add="leporello"><span class="tool-art art-leporello">▥</span><span>Leporello</span></button>
         </div>
       </section>
 
