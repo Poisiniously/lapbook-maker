@@ -10,11 +10,13 @@ A browser-based editor for designing digital lapbooks with interactive flaps, ac
 - Drag elements, change their layer order, duplicate, and delete them.
 - Preview interactive flaps, booklets, pockets, accordions, and spinning wheels.
 - Automatically save the current project in the browser's local storage.
+- Undo and redo (Ctrl+Z / Ctrl+Shift+Z), arrow-key nudging, and a zoom that fits the whole canvas.
 - Export and import projects as JSON files.
+- Info popup per template with a short craft guide (what it is, how to build it, a tip).
 
 ## GitHub Pages
 
-This repository is a static website. In GitHub, open **Settings → Pages**, select the \`main\` branch and the root folder, and save. GitHub Pages will publish \`index.html\`.
+This repository is a static website. In GitHub, open **Settings → Pages**, select the `main` branch and the root folder, and save. GitHub Pages will publish `index.html`.
 
 ## Storage
 

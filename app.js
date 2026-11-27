@@ -182,13 +182,13 @@
     return json.replace(/"open":(true|false),?/g, "").replace(/"openPanels":\[[^\]]*\],?/g, "");
   }
 
-  function trackHistory(state) {
+  function trackHistory(state, forceStep) {
     if (history.restoring) return;
     if (history.last === null) { history.last = state; return; }
     if (historySignature(state) === historySignature(history.last)) { history.last = state; return; }
     const now = Date.now();
     // Changes in quick succession (typing, sliders) share one undo step.
-    if (now - history.lastTime > 700 || history.undo.length === 0) {
+    if (forceStep || now - history.lastTime > 700 || history.undo.length === 0) {
       history.undo.push(history.last);
       if (history.undo.length > 60) history.undo.shift();
     }
@@ -227,9 +227,10 @@
   function undo() { stepHistory(history.undo, history.redo, "Nichts zum Rückgängigmachen"); }
   function redo() { stepHistory(history.redo, history.undo, "Nichts zum Wiederholen"); }
 
-  function persist() {
+  // forceStep = true: this change is its own undo step (add, delete, drag, ...).
+  function persist(forceStep) {
     const state = projectSnapshot();
-    trackHistory(state);
+    trackHistory(state, forceStep === true);
     updateHistoryButtons();
     try {
       localStorage.setItem(STORAGE_KEY, state);
@@ -576,8 +577,9 @@
       // Polygon from the center around the circle, leaving out one segment-wide window at the top.
       const windowAngle = 360 / count;
       const frontPoints = ["50% 50%"];
-      for (let deg = windowAngle; deg <= 360; deg += 3) {
-        const rad = deg * Math.PI / 180;
+      for (let deg = windowAngle; deg < 360 + 3; deg += 3) {
+        // The last step lands exactly on 360° so no sliver of the window is left open.
+        const rad = Math.min(deg, 360) * Math.PI / 180;
         frontPoints.push((50 + 50 * Math.sin(rad)).toFixed(2) + "% " + (50 - 50 * Math.cos(rad)).toFixed(2) + "%");
       }
       front.style.clipPath = "polygon(" + frontPoints.join(", ") + ")";
@@ -1230,7 +1232,7 @@
     item.secondary = item.parts.join("|");
     renderStage();
     renderInspector();
-    persist();
+    persist(true);
   });
 
   function updateItem(property, value) {
@@ -1353,7 +1355,7 @@
     project.selectedId = item.id;
     renderStage();
     renderInspector();
-    persist();
+    persist(true);
     showToast(typeName(type) + " hinzugefügt");
   }
 
@@ -1377,7 +1379,7 @@
     project.selectedId = copy.id;
     renderStage();
     renderInspector();
-    persist();
+    persist(true);
   }
 
   function deleteSelected() {
@@ -1386,7 +1388,7 @@
     project.selectedId = null;
     renderStage();
     renderInspector();
-    persist();
+    persist(true);
     showToast("Element entfernt");
   }
 
@@ -1400,7 +1402,7 @@
     project.elements[target] = temp;
     renderStage();
     renderInspector();
-    persist();
+    persist(true);
   }
 
   function applyZoom() {
@@ -1535,7 +1537,7 @@
       if (tapped) toggleItem(tapped);
       return;
     }
-    persist();
+    persist(true);
   }
 
   // Opens or closes an element in place, so the CSS transition can play.
@@ -1667,7 +1669,7 @@
   document.getElementById("toggle-guides").addEventListener("click", function () {
     project.guides = project.guides === false;
     renderStage();
-    persist();
+    persist(true);
   });
 
   document.getElementById("new-project").addEventListener("click", function () {
@@ -1677,7 +1679,7 @@
     projectTitle.value = project.title;
     renderStage();
     renderInspector();
-    persist();
+    persist(true);
     showToast("Neues Lapbook erstellt");
   });
 
@@ -1691,7 +1693,7 @@
     project.selectedId = null;
     renderStage();
     renderInspector();
-    persist();
+    persist(true);
     showToast("Alle Elemente gelöscht");
   });
 
@@ -1727,7 +1729,7 @@
         projectTitle.value = project.title;
         renderStage();
         renderInspector();
-        persist();
+        persist(true);
         showToast("Lapbook importiert");
       } catch (error) {
         showToast(error.message || "Datei konnte nicht importiert werden.");
@@ -1833,9 +1835,17 @@
 (function () {
   const toggle = document.getElementById("theme-toggle");
   if (!toggle) return;
+  // Keep the browser UI color (mobile address bar) in line with the theme.
+  function syncThemeColor() {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    const color = getComputedStyle(document.documentElement).getPropertyValue("--workspace").trim();
+    if (meta && color) meta.setAttribute("content", color);
+  }
+  syncThemeColor();
   toggle.addEventListener("click", function () {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
+    syncThemeColor();
     try { localStorage.setItem("lapbook-theme", next); } catch (error) { /* storage unavailable */ }
   });
 })();
