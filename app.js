@@ -39,7 +39,7 @@
     hexagon: { type: "hexagon", w: 160, h: 125, text: "Sechseck", secondary: "", bg: "#d5e9df", color: "#4f7560" },
     banner: { type: "banner", w: 270, h: 75, text: "Mein Thema", secondary: "", bg: "#f3cddd", color: "#87536e" },
     flower: { type: "flower", w: 220, h: 220, text: "Blütenmitte", secondary: "Blatt 1|Blatt 2|Blatt 3|Blatt 4|Blatt 5", bg: "#f4d7e5", color: "#80516b" },
-    fan1: { type: "fan1", w: 250, h: 185, text: "Fächer", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e8def8", color: "#62517f" },
+    fan1: { type: "fan1", w: 250, h: 200, text: "Fächer", secondary: "Thema 1|Thema 2|Thema 3|Thema 4", bg: "#e8def8", color: "#62517f" },
     fan2: { type: "fan2", w: 250, h: 210, text: "Fächer 2", secondary: "Teil 1|Teil 2|Teil 3|Teil 4", bg: "#e8def8", color: "#62517f" },
     leporello: { type: "leporello", w: 200, h: 320, text: "Leporello", secondary: "Seite 1|Seite 2|Seite 3|Seite 4", bg: "#e5dafa", color: "#5f4b87" },
     foldcross: { type: "foldcross", w: 230, h: 230, text: "Mitte", secondary: "Oben|Rechts|Unten|Links", bg: "#e7dafa", color: "#63517e" },
@@ -504,10 +504,11 @@
     } else if (item.type === "fan1") {
       labels.forEach(function (label, index) {
         const blade = makeTemplatePanel(item, index, "fan1-blade fan1-blade-" + index, label);
-        const baseAngle = count === 1 ? 0 : -38 + index * 76 / (count - 1);
-        const angle = baseAngle + ((item.openPanels || []).includes(index) ? (index < count / 2 ? -7 : 7) : 0);
-        blade.style.setProperty("--fan-angle", angle + "deg");
-        blade.style.transform = "rotate(" + angle + "deg)";
+        const baseAngle = count === 1 ? 0 : -27 + index * 54 / (count - 1);
+        // Spread angle for the open fan; a clicked blade nudges a bit further out.
+        blade.style.setProperty("--fan-angle", baseAngle + "deg");
+        blade.style.setProperty("--fan-nudge", (index < count / 2 ? -6 : 6) + "deg");
+        blade.style.setProperty("--i", String(index));
         blade.style.zIndex = String(index + 2);
         layout.append(blade);
       });
@@ -727,7 +728,7 @@
     node.style.zIndex = String(3 + project.elements.indexOf(item));
     node.style.color = item.color;
 
-    if (catalogTypes.has(item.type) || ["flap", "booklet", "accordion"].includes(item.type)) {
+    if (catalogTypes.has(item.type) || ["flap", "booklet", "accordion", "tab"].includes(item.type)) {
       node.style.background = "transparent";
     } else {
       node.style.backgroundColor = item.bg;
@@ -786,19 +787,20 @@
       coverBack.style.backgroundColor = item.bg;
       cover.append(coverFace, coverBack);
       node.append(inside, cover, makeToggle(item, item.open ? "Buch schließen" : "Buch öffnen"));
-    } else if (item.type === "wheel") {
-      const face = document.createElement("div");
-      face.className = "wheel-face";
-      face.style.transform = "rotate(" + item.rotation + "deg)";
-      face.style.background = "conic-gradient(" + item.bg + " 0 25%, #f7e5ed 25% 50%, #e5f0e7 50% 75%, #fff0ce 75%)";
-      const center = makeLabel(item.text, "wheel-center");
-      center.style.color = item.color;
-      face.append(center);
-      node.append(face, makeToggle(item, "Drehscheibe drehen"));
+    } else if (item.type === "tab") {
+      // Index tab: the printed tab sticks out of the page, the glue strip is fixed behind it.
+      const glue = document.createElement("div");
+      glue.className = "tab-glue";
+      glue.style.backgroundColor = item.bg;
+      const face = makeLabel(item.text, "tab-face");
+      face.dataset.tap = "toggle";
+      face.style.backgroundColor = item.bg;
+      face.style.color = item.color;
+      node.append(glue, face);
     } else {
       node.append(makeLabel(item.text));
     }
-    if (!catalogTypes.has(item.type) && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet") {
+    if (!catalogTypes.has(item.type) && item.type !== "flap" && item.type !== "accordion" && item.type !== "booklet" && item.type !== "tab") {
       node.style.backgroundColor = item.bg;
     }
     if (project.selectedId === item.id) node.classList.add("selected");
@@ -1280,7 +1282,7 @@
   }
 
   // Types whose single panels only depend on the panel's own is-open class.
-  const inPlacePanelTypes = new Set(["flipflap", "pocket4", "foldcross", "flower", "foldheart"]);
+  const inPlacePanelTypes = new Set(["flipflap", "pocket4", "foldcross", "flower", "foldheart", "fan1"]);
   stage.addEventListener("pointerup", finishDrag);
   stage.addEventListener("pointercancel", finishDrag);
 

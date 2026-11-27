@@ -154,7 +154,11 @@ button { cursor: pointer; }
 .type-star { background: #ffe7ae; color: #8c6d35; clip-path: polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 94%,50% 72%,21% 94%,32% 57%,2% 35%,39% 35%); }
 .type-hexagon { background: #d5e9df; clip-path: polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%); }
 .type-banner { background: #f3cddd; color: #87536e; clip-path: polygon(0 0,100% 0,91% 50%,100% 100%,0 100%,9% 50%); }
-.type-tab { background: #d8ccf4; border: 1px solid #b8a4e2; border-radius: 8px 8px 2px 2px; color: #65518d; }
+.type-tab { background: transparent; }
+.tab-face { position: absolute; z-index: 2; left: 0; right: 0; top: 0; height: 72%; display: grid; place-items: center; border: 1.5px solid #49444d; border-radius: 10px 10px 2px 2px; font-weight: 750; letter-spacing: .03em; cursor: pointer; transition: transform .28s ease, box-shadow .2s ease; }
+.tab-glue { position: absolute; z-index: 1; left: 6%; right: 6%; top: 64%; bottom: 0; border: 1.5px dashed #655d70; border-top-style: solid; filter: brightness(.92); }
+.type-tab:hover .tab-face { transform: translateY(-4%); }
+.type-tab.is-open .tab-face { transform: translateY(-16%); box-shadow: 0 4px 8px #281e322e; }
 .type-flap, .type-booklet, .type-accordion, .type-pocket, .type-wheel { background: transparent; }
 .fold-toggle { position: absolute; z-index: 4; right: 5px; bottom: 5px; width: 23px; height: 23px; display: grid; place-items: center; padding: 0; border: 1px solid #5e4a7c38; border-radius: 50%; background: #ffffffe6; color: #7459a9; font-size: 14px; box-shadow: 0 2px 5px #3226461f; cursor: pointer; }
 .fold-toggle:hover { background: white; transform: scale(1.06); }
@@ -329,13 +333,12 @@ kbd { padding: 2px 5px; border: 1px solid #e4e0e9; border-radius: 4px; backgroun
 .wheel-layout .fold-toggle { right: 2%; bottom: 2%; }
 .wheel-pivot { left: 50%; top: 0; bottom: 0; border-left: 1.5px dashed #655d70; }
 
-.fan1-blade { left: 9%; top: 38%; width: 84%; height: 24%; transform-origin: 8% 50%; border-radius: 1px 8px 8px 1px; }
-.fan1-layout:not(.is-open) .fan1-blade { transform: rotate(0deg) !important; }
-.fan1-layout.is-open .fan1-blade { box-shadow: 0 2px 5px #281e3214; }
-.fan1-blade { justify-content: flex-end; padding-right: 12px; }
-.fan-pivot { position: absolute; z-index: 8; left: 4%; top: 46%; width: 10%; height: 12%; display: grid; place-items: center; border: 2px solid #49444d; border-radius: 50%; background: #c9b6e8; font-size: 0; }
-.fan-cut { left: 7%; top: 36%; width: 88%; height: 28%; border: 1.5px solid #49444d; border-radius: 0 7px 7px 0; }
-.fan-pivot-line { left: 9%; top: 37%; bottom: 37%; border-left: 1.5px dashed #655d70; }
+.fan1-blade { left: 9%; top: 38%; width: 66%; height: 24%; transform-origin: 8% 50%; border-radius: 1px 8px 8px 1px; justify-content: flex-end; padding-right: 12px; transform: rotate(0deg); transition: transform .42s cubic-bezier(.3, .8, .3, 1) calc(var(--i, 0) * 35ms), box-shadow .2s ease, filter .2s ease; }
+.fan1-layout.is-open .fan1-blade { transform: rotate(var(--fan-angle, 0deg)); box-shadow: 0 2px 5px #281e3214; }
+.fan1-layout.is-open .fan1-blade.is-open { transform: rotate(calc(var(--fan-angle, 0deg) + var(--fan-nudge, 0deg))); }
+.fan-pivot { position: absolute; z-index: 8; left: 9.3%; top: 44%; width: 10%; height: 12%; display: grid; place-items: center; border: 2px solid #49444d; border-radius: 50%; background: #c9b6e8; font-size: 0; }
+.fan-cut { left: 7%; top: 35%; width: 70%; height: 30%; border: 1.5px solid #49444d; border-radius: 0 7px 7px 0; }
+.fan-pivot-line { left: 14.3%; top: 36%; bottom: 36%; border-left: 1.5px dashed #655d70; }
 
 .fan2-glue { position: absolute; z-index: 6; left: 0; top: 0; bottom: 0; width: 17%; display: grid; place-items: center; background: #7d7d7d57; border-right: 1.5px dashed #655d70; color: #625d65; font-size: .58em; writing-mode: vertical-rl; }
 .fan2-strip { left: 17%; width: 80%; height: 23%; }
