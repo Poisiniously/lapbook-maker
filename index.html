@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#f7f4ff">
   <meta name="description" content="Gestalte digitale Lapbooks mit Klappen, Faltbüchern, Taschen, Drehscheiben und vielen Papierformen.">
   <title>Lapbook Maker</title>
-  <link rel="stylesheet" href="styles.css?v=folds-9">
-  <script src="app.js?v=folds-9" defer></script>
+  <link rel="stylesheet" href="styles.css?v=folds-10">
+  <script src="app.js?v=folds-10" defer></script>
 </head>
 <body>
   <script>
@@ -53,12 +53,12 @@
       <section class="tool-section">
         <h2>Falt-Elemente</h2>
         <div class="tool-grid">
-          <button class="tool-card" type="button" data-add="flap"><span class="tool-art art-flap"><i></i></span><span>Klappe</span></button>
           <button class="tool-card" type="button" data-add="accordion"><span class="tool-art art-accordion"><i></i><i></i><i></i></span><span>Akkordeon</span></button>
-          <button class="tool-card" type="button" data-add="booklet"><span class="tool-art art-booklet"><i></i></span><span>Mini-Buch</span></button>
-          <button class="tool-card" type="button" data-add="pocket"><span class="tool-art art-pocket"><i></i></span><span>Tasche</span></button>
           <button class="tool-card" type="button" data-add="wheel"><span class="tool-art art-wheel">✳</span><span>Drehscheibe</span></button>
+          <button class="tool-card" type="button" data-add="flap"><span class="tool-art art-flap"><i></i></span><span>Klappe</span></button>
+          <button class="tool-card" type="button" data-add="booklet"><span class="tool-art art-booklet"><i></i></span><span>Mini-Buch</span></button>
           <button class="tool-card" type="button" data-add="tab"><span class="tool-art art-tab">TAB</span><span>Reiter</span></button>
+          <button class="tool-card" type="button" data-add="pocket"><span class="tool-art art-pocket"><i></i></span><span>Tasche</span></button>
         </div>
       </section>
 
@@ -68,24 +68,24 @@
           <button class="tool-card" type="button" data-add="flower"><span class="tool-art art-flower">✿</span><span>Blume</span></button>
           <button class="tool-card" type="button" data-add="fan1"><span class="tool-art art-fan">≋</span><span>Fächer 1</span></button>
           <button class="tool-card" type="button" data-add="fan2"><span class="tool-art art-fan">▤</span><span>Fächer 2</span></button>
-          <button class="tool-card" type="button" data-add="leporello"><span class="tool-art art-leporello">▥</span><span>Leporello</span></button>
-          <button class="tool-card" type="button" data-add="foldcross"><span class="tool-art art-cross">✚</span><span>Faltkreuz</span></button>
           <button class="tool-card" type="button" data-add="foldsheet"><span class="tool-art art-sheet">▤</span><span>Faltblatt</span></button>
+          <button class="tool-card" type="button" data-add="foldheart"><span class="tool-art art-heart">♥</span><span>Faltherz</span></button>
+          <button class="tool-card" type="button" data-add="foldcross"><span class="tool-art art-cross">✚</span><span>Faltkreuz</span></button>
           <button class="tool-card" type="button" data-add="hexfold"><span class="tool-art art-hexagon"></span><span>Falt-Sechseck</span></button>
           <button class="tool-card" type="button" data-add="flipflap"><span class="tool-art art-flip">▥</span><span>Flip-Flap</span></button>
-          <button class="tool-card" type="button" data-add="foldheart"><span class="tool-art art-heart">♥</span><span>Faltherz</span></button>
+          <button class="tool-card" type="button" data-add="leporello"><span class="tool-art art-leporello">▥</span><span>Leporello</span></button>
         </div>
       </section>
 
       <section class="tool-section">
         <h2>Formen &amp; Karten</h2>
         <div class="tool-grid">
-          <button class="tool-card" type="button" data-add="note"><span class="tool-art art-note">Aa</span><span>Notizkarte</span></button>
-          <button class="tool-card" type="button" data-add="circle"><span class="tool-art art-circle"></span><span>Kreis</span></button>
-          <button class="tool-card" type="button" data-add="triangle"><span class="tool-art art-triangle"></span><span>Dreieck</span></button>
-          <button class="tool-card" type="button" data-add="star"><span class="tool-art art-star">★</span><span>Stern</span></button>
-          <button class="tool-card" type="button" data-add="hexagon"><span class="tool-art art-hexagon"></span><span>Sechseck</span></button>
           <button class="tool-card" type="button" data-add="banner"><span class="tool-art art-banner">Titel</span><span>Banner</span></button>
+          <button class="tool-card" type="button" data-add="triangle"><span class="tool-art art-triangle"></span><span>Dreieck</span></button>
+          <button class="tool-card" type="button" data-add="circle"><span class="tool-art art-circle"></span><span>Kreis</span></button>
+          <button class="tool-card" type="button" data-add="note"><span class="tool-art art-note">Aa</span><span>Notizkarte</span></button>
+          <button class="tool-card" type="button" data-add="hexagon"><span class="tool-art art-hexagon"></span><span>Sechseck</span></button>
+          <button class="tool-card" type="button" data-add="star"><span class="tool-art art-star">★</span><span>Stern</span></button>
         </div>
       </section>
 
@@ -133,7 +133,7 @@
     <aside class="panel inspector-panel" aria-label="Eigenschaften">
       <div class="panel-heading">
         <div><p class="eyebrow">FEINSCHLIFF</p><h2>Eigenschaften</h2></div>
-        <span class="inspector-symbol">☷</span>
+        <span class="inspector-symbol" aria-hidden="true">✎</span>
       </div>
       <div id="inspector-content" class="inspector-content">
         <div class="inspector-empty">

@@ -1097,12 +1097,12 @@
       html += renderPartFields(item);
     }
     html += '</section>';
-    html += '<section class="inspector-group"><div class="group-heading"><h3>Farben</h3></div><div class="color-controls"><label class="color-control">Papierfarbe<input id="element-bg" type="color" value="' + escapeHtml(item.bg) + '"></label><label class="color-control">Schriftfarbe<input id="element-color" type="color" value="' + escapeHtml(item.color) + '"></label></div></section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Größe & Position</h3></div>';
     html += '<div class="inline-fields">' + fieldMarkup("Breite", "element-width", item.w, { kind: "range", min: 45, max: 600, step: 5 }) + fieldMarkup("Höhe", "element-height", item.h, { kind: "range", min: 40, max: 500, step: 5 }) + '</div>';
     html += '<div class="inline-fields position-fields">' + fieldMarkup("X-Position", "element-x", item.x, { kind: "number", min: 0, max: 1000, step: 1 }) + fieldMarkup("Y-Position", "element-y", item.y, { kind: "number", min: 0, max: 700, step: 1 }) + '</div>';
     html += fieldMarkup("Drehung", "element-rotation", item.rotation, { kind: "range", min: -360, max: 360, step: 5 });
     html += '</section>';
+    html += '<section class="inspector-group"><div class="group-heading"><h3>Farben</h3></div><div class="color-controls"><label class="color-control">Papierfarbe<input id="element-bg" type="color" value="' + escapeHtml(item.bg) + '"></label><label class="color-control">Schriftfarbe<input id="element-color" type="color" value="' + escapeHtml(item.color) + '"></label></div></section>';
     html += '<section class="inspector-group"><div class="group-heading"><h3>Anordnen</h3></div><div class="layer-actions"><button type="button" class="small-action" data-inspector-action="duplicate">⧉ Duplizieren</button><button type="button" class="small-action" data-inspector-action="front"' + (selectedIndex >= project.elements.length - 1 ? ' disabled' : '') + '>Ebene hoch</button><button type="button" class="small-action" data-inspector-action="back"' + (selectedIndex <= 0 ? ' disabled' : '') + '>Ebene runter</button><button type="button" class="small-action delete-action" data-inspector-action="delete">Entfernen</button></div></section>';
     inspector.innerHTML = html;
     inspector.querySelectorAll(".inspector-group .group-heading h3").forEach(makeCollapsible);
